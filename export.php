@@ -31,15 +31,38 @@ foreach($ics as $event) {
             continue;
         }
         $line = explode(':', $line);
+        $eventData['PROGRAM'] = false;
+        if ($line[0] == 'DESCRIPTION') {
+            $data = explode('\n', $line[1]);
+            //fix escaped commas and trim spaces
+            foreach($data as &$d) {
+                $d = str_replace('\,', ',', $d);
+                $d = trim($d);
+            }
+            /* var_dump($data, in_array('program', $data));
+            exit; */
+            if (in_array('program', $data)) {
+                $eventData['PROGRAM'] = true;
+                unset($data[array_search('program', $data)]); 
+            } else {
+                $eventData['PROGRAM'] = false;
+            }
+            $eventData[$line[0]] = $data;
+            continue;
+        }
         if (count($line) == 2) {
             $eventData[$line[0]] = $line[1];
         }
     }
     /* var_dump($eventData);
     exit; */
+
     if(isset($eventData['DTSTART']) && isset($eventData['DTEND'])) {
-        $eventData['DTSTART'] = new DateTime($eventData['DTSTART']);
-        $eventData['DTEND'] = new DateTime($eventData['DTEND']);
+        //change timezone to CET
+        $eventData['DTSTART'] = new DateTime($eventData['DTSTART'], new DateTimeZone('Europe/Prague'));
+        $eventData['DTEND'] = new DateTime($eventData['DTEND'], new DateTimeZone('Europe/Prague'));
+        $eventData['DTSTART']->setTimezone(new DateTimeZone('Europe/Prague'));
+        $eventData['DTEND']->setTimezone(new DateTimeZone('Europe/Prague'));
         /* var_dump($eventData);
         exit; */
         if($eventData['DTSTART'] >= $startDate && $eventData['DTSTART'] <= $endDate) {
@@ -48,7 +71,7 @@ foreach($ics as $event) {
     }
 }
 
-//group events by single days
+//group events by single days and sort the by time
 $days = [];
 foreach($events as $event) {
     $day = $event['DTSTART']->format('Y-m-d');
@@ -57,6 +80,26 @@ foreach($events as $event) {
     }
     $days[$day][] = $event;
 }
+foreach($days as &$day) {
+    usort($day, function($a, $b) {
+        return $a['DTSTART'] <=> $b['DTSTART'];
+    });
+}
+
+//group events that happen at the same time
+foreach($days as &$day) {
+    $grouped = [];
+    $grouped[] = [$day[0]];
+    for($i = 1; $i < count($day); $i++) {
+        if($day[$i]['DTSTART'] == $day[$i-1]['DTSTART']) {
+            $grouped[count($grouped)-1][] = $day[$i];
+        } else {
+            $grouped[] = [$day[$i]];
+        }
+    }
+    $day = $grouped;
+}
+
 
 $dny_v_tydnu = ['neděle', 'pondělí', 'úterý', 'středa', 'čtvrtek', 'pátek', 'sobota'];
 $jidla = ['snídaně', 'svačina', 'oběd', 'večeře'];
@@ -127,74 +170,61 @@ exit; */
     <?php 
         foreach ($days as $day => $events) {
             echo '<h1 class="text-center font-[\'skautbold\'] text-3xl mb-5">'. $dny_v_tydnu[(new DateTime($day))->format('w')] . ' ' . (new DateTime($day))->format('d. m.') .'</h1>';
-            echo '<div id="boxes" class="flex gap-1 flex-col font-[\'themix\']">
-                <div class="grid grid-cols-[70%_30%]">
+            echo '<div id="boxes" class="flex gap-1 flex-col font-[\'themix\']">';
+            /* box for first two rows */
+            echo '<div class="grid grid-cols-[70%_30%]">
                     <div class="flex flex-col gap-1">';
-            foreach ($events as $event) {
+            /* foreach ($events as $event) { */
+            for ($i=0; $i < 2; $i++) { 
                 /* var_dump($event);
                 exit; */
-                echo '<div class="box ' . ((in_array(trim(strtolower($event['SUMMARY'])), $jidla)) ? 'black_box' : '') . '">
-                        <p>'. $event['DTSTART']->format('h:i') .' - '. $event['DTEND']->format('h:i') .'</p>
-                        <p class="font-bold">'.$event['SUMMARY'].'</p>
+                echo '<div class="box ' . ((in_array(trim(strtolower($events[$i][0]['SUMMARY'])), $jidla)) ? 'black_box' : '') . '">
+                        <p>'. $events[$i][0]['DTSTART']->format('H:i') .' - '. $events[$i][0]['DTEND']->format('H:i') .'</p>
+                        <p class="font-bold">'.$events[$i][0]['SUMMARY'].'</p>
                     </div>';
             }
-            /* format
-                <div class="box">
-                    <p>07:30 - 08:00</p>
-                    <p class="font-bold">Budíček, rozcvička</p>
-                </div>
-            */
-            
+            echo '</div>
+                <div class="flex justify-center items-center">
+                        <div class="flex flex-row gap-1 justify-center items-center w-[85%]">
+                            <img class="h-12 aspect-square" src="pozdrav.png">
+                            <p class="text-[0.5rem]">Takto označený program souvisí s povinným úkolem ve stezce. K jeho splnění nebude další příležitost.</p>
+                        </div>
+                    </div>
+                </div>';
+            /* end of box first two rows */
+            for ($i=2; $i < count($events); $i++) { 
+                if (count($events[$i]) > 1) {
+                    echo '<div class="grid grid-cols-2 gap-1">';
+                    for ($j=0; $j < count($events[$i]); $j++) { 
+                        echo '<div class="box '. (($events[$i][$j]['PROGRAM']) ? 'gray_box' : '') .' min-h-[6rem]">
+                                <p class="p-0 m-0 float-left">'. $events[$i][$j]['DTSTART']->format('H:i') .' - '. $events[$i][$j]['DTEND']->format('H:i') .'</p>
+                                <div class="p-0 m-0 float-left">
+                                    <p class="font-bold">'. $events[$i][$j]['SUMMARY'] .'</p>';
+                                    if (isset($events[$i][$j]['DESCRIPTION'])) {
+                                        echo '<p style="line-height: 17px; margin-top: -0.2rem">';
+                                        foreach ($events[$i][$j]['DESCRIPTION'] as $line) {
+                                            echo $line . '<br>';
+                                        }
+                                    }
+                                echo '</div>
+                            </div>';
+                    }
+                    echo '</div>';
+                    continue;
+                }
+                echo '<div class="box ' . 
+                        ((in_array(trim(strtolower($events[$i][0]['SUMMARY'])), $jidla)) 
+                        ? (($events[$i][0]['PROGRAM']) ? 'gray_box' : 'black_box') : '') . '">
+                        
+                        <p>'. $events[$i][0]['DTSTART']->format('H:i') .' - '. $events[$i][0]['DTEND']->format('H:i') .'</p>
+                        <p class="font-bold">'.$events[$i][0]['SUMMARY'].'</p>
+                    </div>';
+            }
+            //if it's not last iteration, add page break
+            if($day != array_key_last($days)) {
+                echo '<div class="pagebreak"></div>';
+            }
         }
-    ?>
-    <div class="box">
-                    <p>07:30 - 08:00</p>
-                    <p class="font-bold">Budíček, rozcvička</p>
-                </div>
-                <div class="box black_box">
-                    <p>07:30 - 08:00</p>
-                    <p class="font-bold">Snídaně</p>
-                </div>
-            </div>
-            <div class="flex justify-center items-center">
-                <div class="flex flex-row gap-1 justify-center items-center w-[85%]">
-                    <img class="h-12 aspect-square" src="pozdrav.png">
-                    <p class="text-[0.5rem]">Takto označený program souvisí s povinným úkolem ve stezce. K jeho splnění nebude další příležitost.</p>
-                </div>
-            </div>
-        </div>
-        <!-- one hour -->
-        <div class="box min-h-[4rem]">
-            <p>07:00 - 08:00</p>
-            <p class=" font-bold">Na hodinu</p>
-        </div>
-        <!-- gray comment -->
-        <div class="box gray_box min-h-[6rem]">
-            <p class="p-0 m-0 float-left">07:00 - 09:00</p>
-            <div class="p-0 m-0 float-left">
-                <p class="font-bold">Nazev akce</p>
-                <p style="line-height: 14px; margin-top: -0.3rem">sraz u recepce<br>TNT, KAR</p>
-            </div>
-        </div>
-        <!-- two next to each other -->
-        <div class="grid grid-cols-2 gap-1">
-            <div class="box gray_box min-h-[6rem]">
-                <p class="p-0 m-0 float-left">07:00 - 09:00</p>
-                <div class="p-0 m-0 float-left">
-                    <p class="font-bold">Nazev akce</p>
-                    <p style="line-height: 14px; margin-top: -0.3rem">sraz u recepce<br>TNT, KAR</p>
-                </div>
-            </div>
-            <div class="box gray_box min-h-[6rem]">
-                <p class="p-0 m-0 float-left">07:00 - 09:00</p>
-                <div class="p-0 m-0 float-left">
-                    <p class="font-bold">Nazev akce</p>
-                    <p style="line-height: 14px; margin-top: -0.3rem">sraz u recepce<br>TNT, KAR</p>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="pagebreak"></div>
-    <div>this is a kitten</div>
+    ?>    
 </body>
 </html>

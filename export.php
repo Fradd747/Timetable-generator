@@ -31,7 +31,6 @@ foreach($ics as $event) {
             continue;
         }
         $line = explode(':', $line);
-        $eventData['PROGRAM'] = false;
         if ($line[0] == 'DESCRIPTION') {
             $data = explode('\n', $line[1]);
             //fix escaped commas and trim spaces
@@ -42,6 +41,8 @@ foreach($ics as $event) {
             /* var_dump($data, in_array('program', $data));
             exit; */
             if (in_array('program', $data)) {
+                /* var_dump($data);
+                exit; */
                 $eventData['PROGRAM'] = true;
                 unset($data[array_search('program', $data)]); 
             } else {
@@ -51,7 +52,7 @@ foreach($ics as $event) {
             continue;
         }
         if (count($line) == 2) {
-            $eventData[$line[0]] = $line[1];
+            $eventData[$line[0]] = trim($line[1]);
         }
     }
     /* var_dump($eventData);
@@ -196,7 +197,9 @@ exit; */
                 if (count($events[$i]) > 1) {
                     echo '<div class="grid grid-cols-2 gap-1">';
                     for ($j=0; $j < count($events[$i]); $j++) { 
-                        echo '<div class="box '. (($events[$i][$j]['PROGRAM']) ? 'gray_box' : '') .' min-h-[6rem]">
+                        /* var_dump($events[$i]);
+                        exit; */
+                        echo '<div class="box '. (($events[$i][$j]['PROGRAM'] ?? false) ? 'gray_box' : '') .' min-h-[6rem]">
                                 <p class="p-0 m-0 float-left">'. $events[$i][$j]['DTSTART']->format('H:i') .' - '. $events[$i][$j]['DTEND']->format('H:i') .'</p>
                                 <div class="p-0 m-0 float-left">
                                     <p class="font-bold">'. $events[$i][$j]['SUMMARY'] .'</p>';
@@ -214,7 +217,7 @@ exit; */
                 }
                 echo '<div class="box ' . 
                         ((in_array(trim(strtolower($events[$i][0]['SUMMARY'])), $jidla)) 
-                        ? (($events[$i][0]['PROGRAM']) ? 'gray_box' : 'black_box') : '') . '">
+                        ? (($events[$i][0]['PROGRAM'] ?? false) ? 'gray_box' : 'black_box') : '') . '">
                         
                         <p>'. $events[$i][0]['DTSTART']->format('H:i') .' - '. $events[$i][0]['DTEND']->format('H:i') .'</p>
                         <p class="font-bold">'.$events[$i][0]['SUMMARY'].'</p>

@@ -19,37 +19,33 @@ $endDate = new DateTime($dateRange[1]);
 
 //get events in date range
 $events = [];
-$event = explode("\n", $ics[1]);
 
 foreach($ics as $event) {
     $event = explode("\n", $event);
     $eventData = [];
+
     /* var_dump($event);
     exit; */
-    foreach($event as &$line) {
+
+    foreach($event as $key => $line) {
         if (empty(trim($line))) {
+            unset($event[$key]);
             continue;
         }
-        $line = explode(':', $line);
+        $line = array_map('trim', explode(':', $line, 2));
         if ($line[0] == 'DESCRIPTION') {
-            $data = explode('\n', $line[1]);
+            $data = array_map('trim', explode('\n', $line[1]));
             //fix escaped commas and trim spaces
             foreach($data as &$d) {
                 $d = str_replace('\,', ',', $d);
                 $d = trim($d);
             }
-            /* var_dump($data, in_array('program', $data));
-            exit; */
             if (in_array('program', $data)) {
-                /* var_dump($data);
-                exit; */
                 $eventData['PROGRAM'] = true;
                 unset($data[array_search('program', $data)]); 
             }
 
             if (in_array('povinný', $data)) {
-                /* var_dump($data);
-                exit; */
                 $eventData['REQUIRED'] = true;
                 unset($data[array_search('povinný', $data)]); 
             }
@@ -60,8 +56,6 @@ foreach($ics as $event) {
             $eventData[$line[0]] = trim($line[1]);
         }
     }
-    /* var_dump($eventData);
-    exit; */
 
     if(isset($eventData['DTSTART']) && isset($eventData['DTEND'])) {
         //change timezone to CET
@@ -77,31 +71,73 @@ foreach($ics as $event) {
     }
 }
 
-//group events by single days and sort the by time
+
+/* foreach ($events as $event) {
+    echo $event['DTSTART']->format('d') . '<br>';
+} */
+
+//group events by single days
 $days = [];
 foreach($events as $event) {
     $day = $event['DTSTART']->format('Y-m-d');
-    if(!isset($days[$day])) {
-        $days[$day] = [];
-    }
     $days[$day][] = $event;
 }
-foreach($days as &$day) {
+
+//sort events by time
+foreach($days as $key => $day) {
     usort($day, function($a, $b) {
         return $a['DTSTART'] <=> $b['DTSTART'];
     });
+    $days[$key] = $day;
 }
 
-//group events happening at the same time, even if they don't have the same start time
-foreach($days as &$day) {
+/* var_dump($days);
+exit; */
+
+//group events happening at the same time
+foreach ($days as $events) {
+    /* var_dump($events);
+    exit; */
+    $groupedEvents = [];
+    foreach ($events as $event) {
+        $added = false;
+        foreach ($groupedEvents as $groupedEvent) {
+            var_dump($groupedEvents);
+            exit;
+            if ($event['DTSTART'] < $groupedEvent['DTEND'] && $event['DTEND'] > $groupedEvent['DTSTART']) {
+                $groupedEvent[] = $event;
+                $added = true;
+                break;
+            }
+        }
+        if (!$added) {
+            $groupedEvents[] = [$event];
+        }
+    }
+    $day = $groupedEvents;
+}
+
+var_dump($groupedEvents);
+exit;
+
+
+
+
+
+
+
+
+/* foreach($days as &$day) {
     $groupedEvents = [];
     foreach($day as $event) {
         $added = false;
-        foreach($groupedEvents as &$group) {
-            if($event['DTSTART'] < $group[0]['DTEND'] && $event['DTEND'] > $group[0]['DTSTART']) {
-                $group[] = $event;
-                $added = true;
-                break;
+        foreach($groupedEvents as $group) {
+            foreach ($group as $groupEvent) {
+                if($event['DTSTART'] < $groupEvent['DTEND'] && $event['DTEND'] > $groupEvent['DTSTART']) {
+                    $group[] = $event;
+                    $added = true;
+                    break;
+                }
             }
         }
         if(!$added) {
@@ -109,8 +145,17 @@ foreach($days as &$day) {
         }
     }
     $day = $groupedEvents;
-}
+} */
 
+
+var_dump($days);
+exit;
+
+//group events happening at the same time, Independently of their start and end time
+
+
+
+//restructure events happening at the same time
 foreach ($days as &$day) {
     foreach ($day as &$group) {
         if (count($group) > 2) {
@@ -130,15 +175,13 @@ foreach ($days as &$day) {
     }
 }
 
-/* var_dump($days);
-exit; */
+unset($day);
 
+var_dump($days);
+exit;
 
 $dny_v_tydnu = ['neděle', 'pondělí', 'úterý', 'středa', 'čtvrtek', 'pátek', 'sobota'];
 $jidla = ['snídaně', 'svačina', 'oběd', 'večeře'];
-
-/* var_dump($days);
-exit; */
 
 function printEvent(bool $program = false, bool $required = false, DateTime $start, DateTime $end, string $summary, array $description = null, string $classes = '') {    
     //according to time, calculate height of box. 2rem = 30min
@@ -236,62 +279,56 @@ function printEvent(bool $program = false, bool $required = false, DateTime $sta
     <title>Document</title>
 </head>
 <body>
-    <?php 
-    ?>
-    <?php foreach ($days as $day) {
-        foreach ($day as $group) {
-            var_dump($group);
-            exit;?>
-            <h1 class="text-center font-['skautbold'] text-3xl mb-5"><?= $dny_v_tydnu[(new DateTime($day))->format('w')] . ' ' . (new DateTime($day))->format('d. m.') ?></h1>
-            <div id="boxes" class="flex gap-1 flex-col font-['themix']">
-            <div class="grid grid-cols-[70%_30%]">
-                    <div class="flex flex-col gap-1">
-                        <?php for ($i=0; $i < 2; $i++) { 
-                            printEvent(($events[$i][0]['PROGRAM'] ?? false), ($events[$i][0]['REQUIRED'] ?? false), $events[$i][0]['DTSTART'], $events[$i][0]['DTEND'], $events[$i][0]['SUMMARY'], $events[$i][0]['DESCRIPTION'] ?? null);
-                        } ?>
-                </div>
-                    <div class="flex justify-center items-center">
-                        <div class="flex flex-row gap-1 justify-center items-center w-[85%]">
-                            <img class="h-12 aspect-square" src="pozdrav.png">
-                            <p class="text-[0.5rem]">Takto označený program souvisí s povinným úkolem ve stezce. K jeho splnění nebude další příležitost.</p>
-                        </div>
+    <?php foreach ($days as $day => $events) { ?>
+        <h1 class="text-center font-['skautbold'] text-3xl mb-5"><?= $dny_v_tydnu[(new DateTime($day))->format('w')] . ' ' . (new DateTime($day))->format('d. m.') ?></h1>
+        <div id="boxes" class="flex gap-1 flex-col font-['themix']">
+        <div class="grid grid-cols-[70%_30%]">
+                <div class="flex flex-col gap-1">
+                    <?php for ($i=0; $i < 2; $i++) { 
+                        printEvent(($events[$i][0]['PROGRAM'] ?? false), ($events[$i][0]['REQUIRED'] ?? false), $events[$i][0]['DTSTART'], $events[$i][0]['DTEND'], $events[$i][0]['SUMMARY'], $events[$i][0]['DESCRIPTION'] ?? null);
+                    } ?>
+            </div>
+                <div class="flex justify-center items-center">
+                    <div class="flex flex-row gap-1 justify-center items-center w-[85%]">
+                        <img class="h-12 aspect-square" src="pozdrav.png">
+                        <p class="text-[0.5rem]">Takto označený program souvisí s povinným úkolem ve stezce. K jeho splnění nebude další příležitost.</p>
                     </div>
                 </div>
-            <?php for ($i=2; $i < count($events); $i++) { 
-                if (count($events[$i]) > 1) {
-                    /* number of events in one group */
-                    /* two events at the same time */
-                    echo '<div class="grid grid-cols-2 gap-1">';
-                        //check if any of the arrays in the $events[$i] array is an array of arrays
-                        $isArrayOfArrays = false;
-                        foreach ($events[$i] as $event) {
-                            if (array_filter($event, 'is_array') === $event) {
-                                $isArrayOfArrays = true;
-                                break;
-                            }            
-                        }
-                        foreach ($events[$i] as $event) {
-                            if (array_filter($event, 'is_array') === $event) {
-                                echo '<div class="flex flex-col gap-1">';
-                                foreach ($event as $event) {
-                                    printEvent(($event['PROGRAM'] ?? false), ($event['REQUIRED'] ?? false), $event['DTSTART'], $event['DTEND'], $event['SUMMARY'], $event['DESCRIPTION'] ?? null);
-                                }
-                                echo '</div>';
-                            } else {
-                                printEvent(($event['PROGRAM'] ?? false), ($event['REQUIRED'] ?? false), $event['DTSTART'], $event['DTEND'], $event['SUMMARY'], $event['DESCRIPTION'] ?? null, !$isArrayOfArrays ? 'h-fit' : '');
+            </div>
+        <?php for ($i=2; $i < count($events); $i++) { 
+            if (count($events[$i]) > 1) {
+                /* number of events in one group */
+                /* two events at the same time */
+                echo '<div class="grid grid-cols-2 gap-1">';
+                    //check if any of the arrays in the $events[$i] array is an array of arrays
+                    $isArrayOfArrays = false;
+                    foreach ($events[$i] as $event) {
+                        if (array_filter($event, 'is_array') === $event) {
+                            $isArrayOfArrays = true;
+                            break;
+                        }            
+                    }
+                    foreach ($events[$i] as $event) {
+                        if (array_filter($event, 'is_array') === $event) {
+                            echo '<div class="flex flex-col gap-1">';
+                            foreach ($event as $event) {
+                                printEvent(($event['PROGRAM'] ?? false), ($event['REQUIRED'] ?? false), $event['DTSTART'], $event['DTEND'], $event['SUMMARY'], $event['DESCRIPTION'] ?? null);
                             }
+                            echo '</div>';
+                        } else {
+                            printEvent(($event['PROGRAM'] ?? false), ($event['REQUIRED'] ?? false), $event['DTSTART'], $event['DTEND'], $event['SUMMARY'], $event['DESCRIPTION'] ?? null, !$isArrayOfArrays ? 'h-fit' : '');
                         }
-                    echo '</div>';
-                    continue;
-                }
-                printEvent(($events[$i][0]['PROGRAM'] ?? false), ($events[$i][0]['REQUIRED'] ?? false), $events[$i][0]['DTSTART'], $events[$i][0]['DTEND'], $events[$i][0]['SUMMARY'], $events[$i][0]['DESCRIPTION'] ?? null);    
+                    }
+                echo '</div>';
+                continue;
             }
-            //if it's not last iteration, add page break
-            if($day != array_key_last($days)) {
-                echo '<div class="pagebreak"></div>';
-            }
+            printEvent(($events[$i][0]['PROGRAM'] ?? false), ($events[$i][0]['REQUIRED'] ?? false), $events[$i][0]['DTSTART'], $events[$i][0]['DTEND'], $events[$i][0]['SUMMARY'], $events[$i][0]['DESCRIPTION'] ?? null);    
         }
+        //if it's not last iteration, add page break
+        if($day != array_key_last($days)) {
+            echo '<div class="pagebreak"></div>';
         }
+    }
     ?>    
 </body>
 <script>

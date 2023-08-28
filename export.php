@@ -45,8 +45,13 @@ foreach($ics as $event) {
                 exit; */
                 $eventData['PROGRAM'] = true;
                 unset($data[array_search('program', $data)]); 
-            } else {
-                $eventData['PROGRAM'] = false;
+            }
+
+            if (in_array('povinný', $data)) {
+                /* var_dump($data);
+                exit; */
+                $eventData['REQUIRED'] = true;
+                unset($data[array_search('povinný', $data)]); 
             }
             $eventData[$line[0]] = $data;
             continue;
@@ -87,19 +92,46 @@ foreach($days as &$day) {
     });
 }
 
-//group events that happen at the same time
+//group events happening at the same time, even if they don't have the same start time
 foreach($days as &$day) {
-    $grouped = [];
-    $grouped[] = [$day[0]];
-    for($i = 1; $i < count($day); $i++) {
-        if($day[$i]['DTSTART'] == $day[$i-1]['DTSTART']) {
-            $grouped[count($grouped)-1][] = $day[$i];
-        } else {
-            $grouped[] = [$day[$i]];
+    $groupedEvents = [];
+    foreach($day as $event) {
+        $added = false;
+        foreach($groupedEvents as &$group) {
+            if($event['DTSTART'] < $group[0]['DTEND'] && $event['DTEND'] > $group[0]['DTSTART']) {
+                $group[] = $event;
+                $added = true;
+                break;
+            }
+        }
+        if(!$added) {
+            $groupedEvents[] = [$event];
         }
     }
-    $day = $grouped;
+    $day = $groupedEvents;
 }
+
+foreach ($days as &$day) {
+    foreach ($day as &$group) {
+        if (count($group) > 2) {
+            //find the longest event key
+            $longest = 0;
+            for ($i=0; $i < count($group); $i++) { 
+                if ($group[$i]['DTEND']->getTimestamp() - $group[$i]['DTSTART']->getTimestamp() > $group[$longest]['DTEND']->getTimestamp() - $group[$longest]['DTSTART']->getTimestamp()) {
+                    $longest = $i;
+                }
+            }
+
+            $group[] = $group;
+            unset($group[array_key_last($group)][$longest]);
+            //remove all keys except the longest
+            $group = [$group[$longest], $group[array_key_last($group)]];
+        }
+    }
+}
+
+/* var_dump($days);
+exit; */
 
 
 $dny_v_tydnu = ['neděle', 'pondělí', 'úterý', 'středa', 'čtvrtek', 'pátek', 'sobota'];
@@ -107,6 +139,35 @@ $jidla = ['snídaně', 'svačina', 'oběd', 'večeře'];
 
 /* var_dump($days);
 exit; */
+
+function printEvent(bool $program = false, bool $required = false, DateTime $start, DateTime $end, string $summary, array $description = null, string $classes = '') {    
+    //according to time, calculate height of box. 2rem = 30min
+    $height = (($end->getTimestamp() - $start->getTimestamp()) / 900) * 0.8;
+    $time = $start->format('H:i') .' - '. $end->format('H:i');
+    $food = in_array(trim(strtolower($summary)), $GLOBALS['jidla']);
+    //var_dump($height);
+    echo '
+        <div class="box '. ($program ? 'gray_box' : '') . ($food ? 'black_box' : '') . ' min-h-['. $height .'rem] ' . $classes .'">
+            <div class="inner_box">        
+                <p>'. $time .'</p>
+                <div>
+                    <p class="font-bold">'. $summary .'</p>';
+                    if (!is_null($description)) {
+                        echo '<p style="line-height: 17px">';
+                        foreach ($description as $line) {
+                            echo $line . '<br>';
+                        }
+                    }
+          echo '</div>
+            </div>';
+            if ($required) {
+                echo '
+                <div class="flex justify-end items-center pr-3">
+                    <img class="!h-11 !w-11" src="pozdrav.png">
+                </div>';
+            }
+        echo '</div>';
+}
 
 ?>
 <html lang="en">
@@ -147,14 +208,21 @@ exit; */
             padding-left: 0.5rem;
             padding-right: 0.5rem; 
             padding-left: 0.75rem; 
-            border-radius: 0.5rem; 
+            border-radius: 0.5rem;
             border-width: 1px; 
             border-color: #1F2937;
             min-height: 2rem;
+            /* height: fit-content; */
+            display: grid; 
+            font-size: 0.9rem;
+            grid-template-columns: 82% 18%;
+        }
+        .inner_box {
             display: flex;
+            flex-direction: row;
+            gap: 0.5rem;
             align-items: start;
             justify-content: start;
-            gap: 0.5rem;
         }
         .black_box {
             color: #ffffff; 
@@ -169,65 +237,64 @@ exit; */
 </head>
 <body>
     <?php 
-        foreach ($days as $day => $events) {
-            echo '<h1 class="text-center font-[\'skautbold\'] text-3xl mb-5">'. $dny_v_tydnu[(new DateTime($day))->format('w')] . ' ' . (new DateTime($day))->format('d. m.') .'</h1>';
-            echo '<div id="boxes" class="flex gap-1 flex-col font-[\'themix\']">';
-            /* box for first two rows */
-            echo '<div class="grid grid-cols-[70%_30%]">
-                    <div class="flex flex-col gap-1">';
-            /* foreach ($events as $event) { */
-            for ($i=0; $i < 2; $i++) { 
-                /* var_dump($event);
-                exit; */
-                echo '<div class="box ' . ((in_array(trim(strtolower($events[$i][0]['SUMMARY'])), $jidla)) ? 'black_box' : '') . '">
-                        <p>'. $events[$i][0]['DTSTART']->format('H:i') .' - '. $events[$i][0]['DTEND']->format('H:i') .'</p>
-                        <p class="font-bold">'.$events[$i][0]['SUMMARY'].'</p>
-                    </div>';
-            }
-            echo '</div>
-                <div class="flex justify-center items-center">
+    ?>
+    <?php foreach ($days as $day) {
+        foreach ($day as $group) {
+            var_dump($group);
+            exit;?>
+            <h1 class="text-center font-['skautbold'] text-3xl mb-5"><?= $dny_v_tydnu[(new DateTime($day))->format('w')] . ' ' . (new DateTime($day))->format('d. m.') ?></h1>
+            <div id="boxes" class="flex gap-1 flex-col font-['themix']">
+            <div class="grid grid-cols-[70%_30%]">
+                    <div class="flex flex-col gap-1">
+                        <?php for ($i=0; $i < 2; $i++) { 
+                            printEvent(($events[$i][0]['PROGRAM'] ?? false), ($events[$i][0]['REQUIRED'] ?? false), $events[$i][0]['DTSTART'], $events[$i][0]['DTEND'], $events[$i][0]['SUMMARY'], $events[$i][0]['DESCRIPTION'] ?? null);
+                        } ?>
+                </div>
+                    <div class="flex justify-center items-center">
                         <div class="flex flex-row gap-1 justify-center items-center w-[85%]">
                             <img class="h-12 aspect-square" src="pozdrav.png">
                             <p class="text-[0.5rem]">Takto označený program souvisí s povinným úkolem ve stezce. K jeho splnění nebude další příležitost.</p>
                         </div>
                     </div>
-                </div>';
-            /* end of box first two rows */
-            for ($i=2; $i < count($events); $i++) { 
+                </div>
+            <?php for ($i=2; $i < count($events); $i++) { 
                 if (count($events[$i]) > 1) {
+                    /* number of events in one group */
+                    /* two events at the same time */
                     echo '<div class="grid grid-cols-2 gap-1">';
-                    for ($j=0; $j < count($events[$i]); $j++) { 
-                        /* var_dump($events[$i]);
-                        exit; */
-                        echo '<div class="box '. (($events[$i][$j]['PROGRAM'] ?? false) ? 'gray_box' : '') .' min-h-[6rem]">
-                                <p class="p-0 m-0 float-left">'. $events[$i][$j]['DTSTART']->format('H:i') .' - '. $events[$i][$j]['DTEND']->format('H:i') .'</p>
-                                <div class="p-0 m-0 float-left">
-                                    <p class="font-bold">'. $events[$i][$j]['SUMMARY'] .'</p>';
-                                    if (isset($events[$i][$j]['DESCRIPTION'])) {
-                                        echo '<p style="line-height: 17px; margin-top: -0.2rem">';
-                                        foreach ($events[$i][$j]['DESCRIPTION'] as $line) {
-                                            echo $line . '<br>';
-                                        }
-                                    }
-                                echo '</div>
-                            </div>';
-                    }
+                        //check if any of the arrays in the $events[$i] array is an array of arrays
+                        $isArrayOfArrays = false;
+                        foreach ($events[$i] as $event) {
+                            if (array_filter($event, 'is_array') === $event) {
+                                $isArrayOfArrays = true;
+                                break;
+                            }            
+                        }
+                        foreach ($events[$i] as $event) {
+                            if (array_filter($event, 'is_array') === $event) {
+                                echo '<div class="flex flex-col gap-1">';
+                                foreach ($event as $event) {
+                                    printEvent(($event['PROGRAM'] ?? false), ($event['REQUIRED'] ?? false), $event['DTSTART'], $event['DTEND'], $event['SUMMARY'], $event['DESCRIPTION'] ?? null);
+                                }
+                                echo '</div>';
+                            } else {
+                                printEvent(($event['PROGRAM'] ?? false), ($event['REQUIRED'] ?? false), $event['DTSTART'], $event['DTEND'], $event['SUMMARY'], $event['DESCRIPTION'] ?? null, !$isArrayOfArrays ? 'h-fit' : '');
+                            }
+                        }
                     echo '</div>';
                     continue;
                 }
-                echo '<div class="box ' . 
-                        ((in_array(trim(strtolower($events[$i][0]['SUMMARY'])), $jidla)) 
-                        ? (($events[$i][0]['PROGRAM'] ?? false) ? 'gray_box' : 'black_box') : '') . '">
-                        
-                        <p>'. $events[$i][0]['DTSTART']->format('H:i') .' - '. $events[$i][0]['DTEND']->format('H:i') .'</p>
-                        <p class="font-bold">'.$events[$i][0]['SUMMARY'].'</p>
-                    </div>';
+                printEvent(($events[$i][0]['PROGRAM'] ?? false), ($events[$i][0]['REQUIRED'] ?? false), $events[$i][0]['DTSTART'], $events[$i][0]['DTEND'], $events[$i][0]['SUMMARY'], $events[$i][0]['DESCRIPTION'] ?? null);    
             }
             //if it's not last iteration, add page break
             if($day != array_key_last($days)) {
                 echo '<div class="pagebreak"></div>';
             }
         }
+        }
     ?>    
 </body>
+<script>
+    //window.onload = function() { window.print(); }
+</script>
 </html>

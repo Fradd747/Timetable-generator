@@ -94,66 +94,23 @@ foreach($days as $key => $day) {
 /* var_dump($days);
 exit; */
 
+$groupedEvents = [];
 //group events happening at the same time
-foreach ($days as $events) {
-    /* var_dump($events);
-    exit; */
-    $groupedEvents = [];
-    foreach ($events as $event) {
-        $added = false;
-        foreach ($groupedEvents as $groupedEvent) {
-            var_dump($groupedEvents);
-            exit;
-            if ($event['DTSTART'] < $groupedEvent['DTEND'] && $event['DTEND'] > $groupedEvent['DTSTART']) {
-                $groupedEvent[] = $event;
-                $added = true;
-                break;
-            }
-        }
-        if (!$added) {
-            $groupedEvents[] = [$event];
-        }
-    }
-    $day = $groupedEvents;
-}
-
-var_dump($groupedEvents);
-exit;
-
-
-
-
-
-
-
-
-/* foreach($days as &$day) {
-    $groupedEvents = [];
-    foreach($day as $event) {
-        $added = false;
-        foreach($groupedEvents as $group) {
+foreach ($days as &$day) {
+    $grouped = [];
+    foreach ($day as $event) {
+        foreach ($grouped as $key => $group) {
             foreach ($group as $groupEvent) {
                 if($event['DTSTART'] < $groupEvent['DTEND'] && $event['DTEND'] > $groupEvent['DTSTART']) {
-                    $group[] = $event;
-                    $added = true;
-                    break;
+                    $grouped[$key][] = $event;
+                    continue 3;
                 }
             }
         }
-        if(!$added) {
-            $groupedEvents[] = [$event];
-        }
+        $grouped[] = [$event];
     }
-    $day = $groupedEvents;
-} */
-
-
-var_dump($days);
-exit;
-
-//group events happening at the same time, Independently of their start and end time
-
-
+    $day = $grouped;
+}
 
 //restructure events happening at the same time
 foreach ($days as &$day) {
@@ -175,10 +132,11 @@ foreach ($days as &$day) {
     }
 }
 
+//do not remove. It's for reference binding
 unset($day);
 
-var_dump($days);
-exit;
+/* var_dump($days);
+exit; */
 
 $dny_v_tydnu = ['neděle', 'pondělí', 'úterý', 'středa', 'čtvrtek', 'pátek', 'sobota'];
 $jidla = ['snídaně', 'svačina', 'oběd', 'večeře'];

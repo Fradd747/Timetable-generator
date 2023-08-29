@@ -1,5 +1,7 @@
 <?php
 
+session_start();
+
 //redirect back if file or daterange is missing
 if($_FILES['file']['size'] == 0 || !isset($_POST['daterange'])) {
     header('Location: index.php');
@@ -71,10 +73,14 @@ foreach($ics as $event) {
     }
 }
 
-
-/* foreach ($events as $event) {
-    echo $event['DTSTART']->format('d') . '<br>';
-} */
+//if no events, redirect back
+if(empty($events)) {
+    $_SESSION['error'] = 'Nebyly nalezeny žádné události v zadaném rozmezí.';
+    header('Location: index.php');
+    exit();
+} else {
+    unset($_SESSION['error']);
+}
 
 //group events by single days
 $days = [];

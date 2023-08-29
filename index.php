@@ -1,3 +1,4 @@
+<?php session_start(); ?>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -41,6 +42,12 @@
                 <div class="flex flex-col gap-1">
                     <label for="file">Rozsah exportu</label>
                     <input type="text" name="daterange" class="p-1 border rounded-lg" required/>
+                    <?php 
+                        if (isset($_SESSION['error'])) {
+                            echo '<div class="bg-red-200 border border-red-400 text-red-700 text-sm p-1 rounded-md relative" role="alert">'.$_SESSION['error'].'</div>';
+                            unset($_SESSION['error']);
+                        }
+                    ?>
                 </div>
                 <button type="submit" class="shadow-lg border rounded-lg p-2 hover:scale-105 transition">Vygenerovat</button>
             </form>

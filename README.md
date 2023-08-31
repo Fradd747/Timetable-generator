@@ -1,1 +1,1 @@
-# Generátor harmonogramů z Google kalendáře 
+Generátor harmonogramů z Google kalendáře 

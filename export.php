@@ -144,14 +144,14 @@ unset($day);
 /* var_dump($days);
 exit; */
 
-$dny_v_tydnu = ['neděle', 'pondělí', 'úterý', 'středa', 'čtvrtek', 'pátek', 'sobota'];
-$jidla = ['snídaně', 'svačina', 'oběd', 'večeře'];
+$week_days = ['neděle', 'pondělí', 'úterý', 'středa', 'čtvrtek', 'pátek', 'sobota'];
+$food = ['snídaně', 'svačina', 'oběd', 'večeře'];
 
 function printEvent(bool $program = false, bool $required = false, DateTime $start, DateTime $end, string $summary, array $description = null, string $classes = '') {    
     //according to time, calculate height of box. 2rem = 30min
     $height = (($end->getTimestamp() - $start->getTimestamp()) / 900) * 0.8;
     $time = $start->format('H:i') .' - '. $end->format('H:i');
-    $food = in_array(trim(strtolower($summary)), $GLOBALS['jidla']);
+    $food = in_array(trim(strtolower($summary)), $GLOBALS['food']);
     //var_dump($height);
     echo '
         <div class="box '. ($program ? 'gray_box' : '') . ($food ? 'black_box' : '') . ' min-h-['. $height .'rem] ' . $classes .'">
@@ -244,7 +244,7 @@ function printEvent(bool $program = false, bool $required = false, DateTime $sta
 </head>
 <body>
     <?php foreach ($days as $day => $events) { ?>
-        <h1 class="text-center font-['skautbold'] text-3xl mb-5"><?= $dny_v_tydnu[(new DateTime($day))->format('w')] . ' ' . (new DateTime($day))->format('d. m.') ?></h1>
+        <h1 class="text-center font-['skautbold'] text-3xl mb-5"><?= $week_days[(new DateTime($day))->format('w')] . ' ' . (new DateTime($day))->format('d. m.') ?></h1>
         <div id="boxes" class="flex gap-1 flex-col font-['themix']">
         <div class="grid grid-cols-[70%_30%]">
                 <div class="flex flex-col gap-1">

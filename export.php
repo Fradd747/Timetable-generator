@@ -145,7 +145,7 @@ unset($day);
 exit; */
 
 $week_days = ['neděle', 'pondělí', 'úterý', 'středa', 'čtvrtek', 'pátek', 'sobota'];
-$food = ['snídaně', 'svačina', 'oběd', 'večeře'];
+$food = ['snídaně', 'svačina', 'oběd & polední klid', 'večeře'];
 
 function printEvent(bool $program = false, bool $required = false, DateTime $start, DateTime $end, string $summary, array $description = null, string $classes = '') {    
     //according to time, calculate height of box. 2rem = 30min
@@ -296,6 +296,6 @@ function printEvent(bool $program = false, bool $required = false, DateTime $sta
     ?>    
 </body>
 <script>
-    //window.onload = function() { window.print(); }
+    window.onload = function() { window.print(); }
 </script>
 </html>

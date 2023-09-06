@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Timetable generator</title>
     <script src="https://cdn.tailwindcss.com/3.3.0"></script>    
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script type="text/javascript" src="https://cdn.jsdelivr.net/jquery/latest/jquery.min.js"></script>
     <script type="text/javascript" src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
@@ -28,15 +29,69 @@
             font-style: normal;
             font-weight: normal;
         }
+        .myshadow {
+            box-shadow: 0px 3px 8px rgba(0, 0, 0, 0.24);
+        }
+        .secondshadow {
+            box-shadow: rgba(0, 0, 0, 0.05) 0px 6px 24px 0px, rgba(0, 0, 0, 0.08) 0px 0px 0px 1px;
+        }
+        [x-cloak] { display: none !important; }
     </style>
 </head>
-<body>
-    <div class="flex justify-center bg-gray-200 items-center w-screen h-screen">
-        <div class="w-full max-w-xl bg-white rounded-xl shadow-lg p-3">
+<body x-data="{ open: false }">
+    <div x-cloak x-show="open" class="w-full h-full fixed top-0 left-0 flex justify-center items-center z-10">
+        <div @click.outside="open = false" class="w-full max-w-2xl mx-3 p-3 bg-white rounded-xl myshadow relative">
+            <img @click="open = false" src="icons/cross.svg" class="w-6 absolute top-2 right-2 cursor-pointer transition hover:scale-110">
+            <ul aria-label="Activity feed" role="feed" class="relative flex flex-col gap-6 py-6 pl-6 before:absolute before:top-0 before:left-6 before:h-full h-fit before:border before:-translate-x-1/2 before:border-slate-200 before:border-dashed after:absolute after:top-6 after:left-6 after:bottom-6 after:border after:-translate-x-1/2 after:border-slate-200 ">
+                <li class="relative pl-3">
+                    <h3 class="font-bold">Jak exportovat ICS soubor z Google kalendáře?</h3>
+                </li>
+                <li class="relative pl-6 flex items-center">
+                    <span class="absolute left-0 z-10 flex items-center justify-center w-8 h-8 -translate-x-1/2 rounded-full text-slate-700 ring-2 ring-white bg-slate-200 ">
+                        1
+                    </span>
+                    <div class="flex flex-col flex-1 gap-0">
+                        <p class="text-xs text-slate-500">Otevřete <a class="text-blue-500" href="https://calendar.google.com/">Google Kalendář</a> ve svém prohlížeči.</p>
+                    </div>
+                </li>
+                <li class="relative pl-6 flex items-start">
+                    <span class="absolute left-0 z-10 flex items-center justify-center w-8 h-8 -translate-x-1/2 rounded-full text-slate-700 ring-2 ring-white bg-slate-200 ">
+                        2
+                    </span>
+                    <div class="flex flex-col flex-1 gap-0">
+                        <p class="text-xs text-slate-500">Na levé straně okna Kalendáře klikněte na tři vodorovné tečky vedle názvu kalendáře který chcete exportovat. Klepněte na "<b>Nastavení a sdílení</b>" (Settings and sharing).</p>
+                        <img src="images/settings.jpg" class="w-80 rounded-md border border-gray-200 mt-1">
+                    </div>
+                </li>
+                <li class="relative pl-6 flex items-start">
+                    <span class="absolute left-0 z-10 flex items-center justify-center w-8 h-8 -translate-x-1/2 rounded-full text-slate-700 ring-2 ring-white bg-slate-200 ">
+                        3
+                    </span>
+                    <div class="flex flex-col flex-1 gap-0">
+                        <p class="text-xs text-slate-500">Klikněte na tlačítko "<b>Exportovat kalendář</b>" (Export calendar) a soubor se začne stahovat do vašeho počítače.</p>
+                        <img src="images/download.jpg" class="w-80 rounded-md border border-gray-200 mt-1">
+                    </div>
+                </li>
+                <li class="relative pl-6 flex items-center">
+                    <span class="absolute left-0 z-10 flex items-center justify-center w-8 h-8 -translate-x-1/2 rounded-full text-slate-700 ring-2 ring-white bg-slate-200 ">
+                        4
+                    </span>
+                    <div class="flex flex-col flex-1 gap-0">
+                        <p class="text-xs text-slate-500">Stažený archiv rozbalte pomocí libovolného programu jako je například <a class="text-blue-500" href="https://www.7-zip.org/">7Zip</a> nebo <a class="text-blue-500" href="https://www.rar.cz/download.php">WinRar</a>, čímž získáte požadovaný soubor .ics .</p>
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </div>
+    <div class="flex justify-center bg-gray-200 items-center w-screen h-screen z-0">
+        <div class="w-full max-w-xl mx-3 bg-white rounded-xl shadow-lg p-3">
             <h1 class="font-['skautbold'] text-lg mb-2">Generátor harmonogramu</h1>
             <form action="export.php" method="post" class="flex flex-col gap-3 items-start font-['themix']" enctype="multipart/form-data">
                 <div class="flex flex-col gap-1">
-                    <label for="file">ICS export z Google kalendáře</label>
+                    <div class="flex gap-1 flex-row items-base">
+                        <label for="file">ICS export z Google kalendáře</label>
+                        <img @click="open = !open" src="icons/question.svg" class="w-6 cursor-pointer transition hover:scale-110">
+                    </div>
                     <input type="file" name="file" id="file" accept=".ics" required>
                 </div>
                 <div class="flex flex-col gap-1">

@@ -34,66 +34,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="https://cdn.tailwindcss.com/3.3.0"></script>
-    <style>
-        body {
-            -webkit-print-color-adjust:exact !important;
-            print-color-adjust:exact !important;
-        }
-        @media print {
-            .pagebreak { page-break-before: always; 
-            }
-        }
-        @font-face {
-            font-family: 'themix';
-            src: url('fonts/themix-bold.ttf') format('truetype');
-            font-style: bold;
-            font-weight: normal;
-        }
-        @font-face {
-            font-family: 'themix';
-            src: url('fonts/themix-normal.ttf') format('truetype');
-            font-style: normal;
-            font-weight: normal;
-        }
-        @font-face {
-            font-family: 'skautbold';
-            src: url('fonts/skautbold.ttf') format('truetype');
-            font-style: normal;
-            font-weight: normal;
-        }
-        .box {
-            padding-top: 0.25rem;
-            padding-bottom: 0.25rem; 
-            padding-left: 0.5rem;
-            padding-right: 0.5rem; 
-            padding-left: 0.75rem; 
-            border-radius: 0.5rem;
-            border-width: 1px; 
-            border-color: #1F2937;
-            min-height: 2rem;
-            /* height: fit-content; */
-            display: grid; 
-            font-size: 0.9rem;
-            grid-template-columns: 82% 18%;
-        }
-        .inner_box {
-            display: flex;
-            flex-direction: row;
-            gap: 0.5rem;
-            align-items: start;
-            justify-content: start;
-        }
-        .black_box {
-            color: #ffffff; 
-            background-color: #1F2937; 
-        }
-        .gray_box {
-            color: #1F2937; 
-            background-color: #cecece;
-        }
-    </style>
     <title>Generátor harmonogramu</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <?php foreach ($days as $day => $events) { ?>

@@ -16,7 +16,7 @@
     <!-- calendar export tutorial -->
     <div x-cloak x-show="export_popup" x-transition class="w-full h-full fixed top-0 left-0 flex justify-center items-center z-10">
         <div @click.outside="export_popup = false" class="w-full max-w-2xl mx-3 md:m-0 p-3 bg-white rounded-xl myshadow relative">
-            <img @click="export_popup = false" src="icons/cross.svg" class="w-6 absolute top-2 z-20 right-2 cursor-pointer transition hover:scale-110">
+            <img @click="export_popup = false" src="images/icons/cross.svg" class="w-6 absolute top-2 z-20 right-2 cursor-pointer transition hover:scale-110">
             <ul aria-label="Activity feed" role="feed" class="relative flex flex-col gap-6 py-6 pl-6 before:absolute before:top-0 before:left-6 before:h-full h-fit before:border before:-translate-x-1/2 before:border-slate-200 before:border-dashed after:absolute after:top-6 after:left-6 after:bottom-6 after:border after:-translate-x-1/2 after:border-slate-200 ">
                 <li class="relative pl-3">
                     <h3 class="font-bold">Jak exportovat ICS soubor z Google kalendáře?</h3>
@@ -61,7 +61,7 @@
     <!-- calendar export tutorial -->
     <div x-cloak x-show="export_popup" x-transition class="w-full h-full fixed top-0 left-0 flex justify-center items-center z-10">
         <div @click.outside="export_popup = false" class="w-full max-w-2xl mx-3 md:m-0 p-3 bg-white rounded-xl myshadow relative">
-            <img @click="export_popup = false" src="icons/cross.svg" class="w-6 absolute top-2 z-20 right-2 cursor-pointer transition hover:scale-110">
+            <img @click="export_popup = false" src="images/icons/cross.svg" class="w-6 absolute top-2 z-20 right-2 cursor-pointer transition hover:scale-110">
             <ul aria-label="Activity feed" role="feed" class="relative flex flex-col gap-6 py-6 pl-6 before:absolute before:top-0 before:left-6 before:h-full h-fit before:border before:-translate-x-1/2 before:border-slate-200 before:border-dashed after:absolute after:top-6 after:left-6 after:bottom-6 after:border after:-translate-x-1/2 after:border-slate-200 ">
                 <li class="relative pl-3">
                     <h3 class="font-bold">Jak exportovat ICS soubor z Google kalendáře?</h3>
@@ -110,14 +110,14 @@
                 <div class="flex flex-col gap-1">
                     <div class="flex gap-1 flex-row items-base">
                         <label for="file">ICS export z Google kalendáře</label>
-                        <img @click="export_popup = !export_popup" src="icons/question.svg" class="w-6 cursor-pointer transition hover:scale-110">
+                        <img @click="export_popup = !export_popup" src="images/icons/question.svg" class="w-6 cursor-pointer transition hover:scale-110">
                     </div>
                     <input type="file" name="file" id="file" accept=".ics" required>
                 </div>
                 <div class="flex flex-col gap-1">
                     <div class="flex gap-1 flex-row items-base">
                         <label for="template">Šablona</label>
-                        <img @click="event_popup = !event_popup" src="icons/question.svg" class="w-6 cursor-pointer transition hover:scale-110">
+                        <img @click="event_popup = !event_popup" src="images/icons/question.svg" class="w-6 cursor-pointer transition hover:scale-110">
                     </div>
                     <select name="template" class="bg-gray-50 px-2 py-1.5 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block min-w-[12rem] w-full dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                         <option value="default" selected>Výchozí</option>

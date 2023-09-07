@@ -23,7 +23,7 @@
                 if ($required) {
                     echo '
                     <div class="flex justify-end items-center pr-3">
-                        <img class="!h-11 !w-11" src="icons/hand.png">
+                        <img class="!h-11 !w-11" src="images/icons/hand.png">
                     </div>';
                 }
             echo '</div>';
@@ -51,7 +51,7 @@
             </div>
                 <div class="flex justify-center items-center">
                     <div class="flex flex-row gap-1 justify-center items-center w-[85%]">
-                        <img class="h-12 aspect-square" src="icons/hand.png">
+                        <img class="h-12 aspect-square" src="images/icons/hand.png">
                         <p class="text-[0.5rem]">Takto označený program souvisí s povinným úkolem ve stezce. K jeho splnění nebude další příležitost.</p>
                     </div>
                 </div>

@@ -23,7 +23,7 @@
                 if ($required) {
                     echo '
                     <div class="flex justify-end items-center pr-3">
-                        <img class="!h-11 !w-11" src="icons/mark.svg">
+                        <img class="!h-11 !w-11" src="images/icons/mark.svg">
                     </div>';
                 }
             echo '</div>';

@@ -12,13 +12,36 @@
     <script type="text/javascript" src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
     <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
+    <style>
+        ::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+
+        ::-webkit-scrollbar-track {
+        -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+        -webkit-border-radius: 10px;
+        border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+        -webkit-border-radius: 10px;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.3);
+        -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.5);
+        }
+
+        ::-webkit-scrollbar-thumb:window-inactive {
+        background: rgba(255, 255, 255, 0.3);
+        }
+    </style>
 </head>
 <body x-data="{ export_popup: false, event_popup: false }">
     <!-- calendar export tutorial -->
-    <div x-cloak x-show="export_popup" x-transition class="w-full h-full fixed top-0 left-0 flex justify-center items-center z-10">
-        <div @click.outside="export_popup = false" class="w-full max-w-2xl mx-3 md:m-0 p-3 bg-white rounded-xl myshadow relative">
+    <div x-cloak x-show="export_popup" x-transition class="w-full h-full fixed top-0 left-0 flex justify-center items-center py-5 z-10">
+        <div @click.outside="export_popup = false" class="w-full h-full pt-10 max-w-2xl mx-3 md:m-0 p-3 bg-white rounded-xl myshadow relative">
             <img @click="export_popup = false" src="images/icons/cross.svg" class="w-6 absolute top-2 z-20 right-2 cursor-pointer transition hover:scale-110">
-            <ul aria-label="Activity feed" role="feed" class="relative flex flex-col gap-6 py-6 pl-6 before:absolute before:top-0 before:left-6 before:h-full h-fit before:border before:-translate-x-1/2 before:border-slate-200 before:border-dashed after:absolute after:top-6 after:left-6 after:bottom-6 after:border after:-translate-x-1/2 after:border-slate-200 ">
+            <ul aria-label="Activity feed" role="feed" class="h-full overflow-y-auto relative flex flex-col gap-6 py-6 pl-6 before:absolute before:top-0 before:left-6 before:h-full h-fit before:border before:-translate-x-1/2 before:border-slate-200 before:border-dashed after:absolute after:top-6 after:left-6 after:bottom-6 after:border after:-translate-x-1/2 after:border-slate-200 ">
                 <li class="relative pl-3">
                     <h3 class="font-bold">Jak exportovat ICS soubor z Google kalendáře?</h3>
                 </li>
@@ -60,10 +83,10 @@
         </div>
     </div>
     <!-- calendar export tutorial -->
-    <div x-cloak x-show="event_popup" x-transition class="w-full h-full fixed top-0 left-0 flex justify-center items-center z-10">
-        <div @click.outside="event_popup = false" class="w-full max-w-2xl mx-3 md:m-0 p-3 bg-white rounded-xl myshadow relative">
+    <div x-cloak x-show="event_popup" x-transition class="w-full h-full fixed top-0 left-0 flex justify-center items-center py-5 z-10">
+        <div @click.outside="event_popup = false" class="w-full h-full pt-10 max-w-2xl mx-3 md:m-0 p-3 bg-white rounded-xl myshadow relative">
             <img @click="event_popup = false" src="images/icons/cross.svg" class="w-6 absolute top-2 z-20 right-2 cursor-pointer transition hover:scale-110">
-            <ul aria-label="Activity feed" role="feed" class="relative flex flex-col gap-6 py-6 pl-6 before:absolute before:top-0 before:left-6 before:h-full h-fit before:border before:-translate-x-1/2 before:border-slate-200 before:border-dashed after:absolute after:top-6 after:left-6 after:bottom-6 after:border after:-translate-x-1/2 after:border-slate-200 ">
+            <ul aria-label="Activity feed" role="feed" class="h-full overflow-y-auto relative flex flex-col gap-6 py-6 pl-6 before:absolute before:top-0 before:left-6 before:h-full h-fit before:border before:-translate-x-1/2 before:border-slate-200 before:border-dashed after:absolute after:top-6 after:left-6 after:bottom-6 after:border after:-translate-x-1/2 after:border-slate-200 ">
                 <li class="relative pl-3">
                     <h3 class="font-bold">Jak nastavit akce v kalendáři?</h3>
                 </li>

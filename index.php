@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="images/logo_without_text.png">
     <title>Generátor harmonogramu</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="styles.css">
@@ -92,7 +93,7 @@
             </ul>
         </div>
     </div>
-    <div class="flex justify-center bg-gray-200 items-center w-screen h-[90vh] z-0">
+    <div class="flex justify-center bg-gray-200 items-center w-full p-0 w-0 h-[90vh] z-0">
         <div class="w-fit max-w-xl mx-3 bg-white rounded-xl shadow-lg p-3">
             <!-- <h1 class="font-['skautbold'] text-lg mb-2">Generátor harmonogramu</h1> -->
             <div class="flex justify-center w-full">
@@ -138,9 +139,6 @@
                 <span class="block text-sm text-center text-gray-500 dark:text-gray-400">
                     Jan Korbay - <a href="mailto:jan.korbay@skaut.cz" class="text-blue-800 hover:underline dark:text-blue-500">jan.korbay@skaut.cz</a>
                 </span>
-                <a href="{{route('privacy-policy')}}" class="block text-sm text-center -mt-2 text-gray-500 dark:text-gray-400">
-                    Ochrana osobních údajů
-                 </a>
                 <ul class="flex justify-center gap-2">
                     <li>
                         <a href="https://www.facebook.com/jankorbay/"

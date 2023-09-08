@@ -4,8 +4,12 @@
         //according to time, calculate height of box. 2rem = 30min
         $height = (($end->getTimestamp() - $start->getTimestamp()) / 900) * 0.8;
         $time = $start->format('H:i') .' - '. $end->format('H:i');
-        $food = in_array(trim(strtolower($summary)), $GLOBALS['food']);
-        //var_dump($height);
+        $food = false;
+        foreach ($GLOBALS['food'] as $foodType) {
+            if (mb_stripos($summary, $foodType) !== false) {
+                $food = true;
+            }
+        }
         echo '
             <div class="box '. ($program ? 'gray_box' : '') . ($food ? 'black_box' : '') . ' min-h-['. $height .'rem] ' . $classes .'">
                 <div class="inner_box">        

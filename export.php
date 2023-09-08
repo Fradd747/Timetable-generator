@@ -145,7 +145,7 @@ unset($day);
 exit; */
 
 $week_days = ['neděle', 'pondělí', 'úterý', 'středa', 'čtvrtek', 'pátek', 'sobota'];
-$food = ['snídaně', 'svačina', 'oběd & polední klid', 'večeře'];
+$food = ['snídaně', 'svačina', 'oběd', 'večeře'];
 
 //load template
 include 'templates/' . $_POST['template'] . '.php';

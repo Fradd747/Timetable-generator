@@ -40,7 +40,7 @@ foreach($ics as $event) {
             //fix escaped commas and trim spaces
             foreach($data as &$d) {
                 $d = str_replace('\,', ',', $d);
-                $d = trim($d);
+                $d = strtolower(trim($d));
             }
             if (in_array('program', $data)) {
                 $eventData['PROGRAM'] = true;
@@ -145,7 +145,7 @@ unset($day);
 exit; */
 
 $week_days = ['neděle', 'pondělí', 'úterý', 'středa', 'čtvrtek', 'pátek', 'sobota'];
-$food = ['snídaně', 'svačina', 'oběd', 'večeře'];
+$food = ['snídaně', 'svačina', 'oběd & polední klid', 'večeře'];
 
 //load template
 include 'templates/' . $_POST['template'] . '.php';

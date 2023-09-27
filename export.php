@@ -40,9 +40,9 @@ foreach($ics as $event) {
             //fix escaped commas and trim spaces
             foreach($data as &$d) {
                 $d = str_replace('\,', ',', $d);
-                $d = strtolower(trim($d));
+                $d = trim($d);
             }
-            if (in_array('program', $data)) {
+            if (in_array('program', array_map('strtolower', $data))) {
                 $eventData['PROGRAM'] = true;
                 unset($data[array_search('program', $data)]); 
             }

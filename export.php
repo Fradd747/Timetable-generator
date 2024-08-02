@@ -17,49 +17,119 @@ unset($ics[0]);
 //get date range
 $dateRange = explode(' - ', $_POST['daterange']);
 $startDate = new DateTime($dateRange[0]);
-#$endDate = new DateTime($dateRange[1]);
-//add one day to include the end date
 $endDate = new DateTime($dateRange[1]);
 $endDate->add(new DateInterval('P1D')); //add one day
 
 //get events in date range
 $events = [];
+$recurrences = [];
 
-foreach($ics as $event) {
-    $event = array_map('trim', explode("\n", trim($event)));
-    $eventData = [];
+foreach ($ics as $event) {
+    $event = array_map('rtrim', explode("\n", $event));
+    //delete empty lines and renumerate array
+    $event = array_values(array_filter($event));
 
-    //parse event data
-    foreach ($event as $line) {
-        $parts = explode(':', $line, 2);
-    
-        if (count($parts) == 2) {
-            $key = $parts[0];
-            $value = $parts[1];
-    
-            // Handle the case where the key contains a semicolon
-            $semicolonPos = strpos($key, ';');
-            if ($semicolonPos !== false) {
-                $key = substr($key, 0, $semicolonPos);
-            }
-    
-            if (!isset($eventData[$key])) {
-                $eventData[$key] = $value;
-            } else {
-                if (!is_array($eventData[$key])) {
-                    $eventData[$key] = [$eventData[$key]];
-                }
-                $eventData[$key][] = $value;
-            }
+    /* var_dump($event);
+    exit; */
+
+    $eventParsed = [];
+
+    // Merge lines starting with space to the last line without space. Add correct data to $eventParsed
+    $mergedLine = "";
+    for ($i=0; $i < count($event); $i++) {
+        if ($i == 0) {
+            $mergedLine = $event[$i];
+        }
+        if (substr($event[$i], 0, 1) != ' ') {
+            $mergedLine = $event[$i];
+            $eventParsed[] = $mergedLine;
+        } else {
+            $mergedLine .= substr($event[$i], 1);
         }
     }
 
-    //filter only events in year of time range
-    if (isset($eventData['DTSTART']) && isset($eventData['DTEND'])) {
-        $eventData['DTSTART'] = new DateTime($eventData['DTSTART'], new DateTimeZone('Europe/Prague'));
-        $eventData['DTEND'] = new DateTime($eventData['DTEND'], new DateTimeZone('Europe/Prague'));    
+    $keywords = ['DTSTART', 'DTEND', 'RRULE', 'EXDATE', 'SUMMARY', 'DESCRIPTION', 'RECURRENCE-ID'];
+    
+    //keep only lines with keywords
+    $eventParsed = array_filter($eventParsed, function($line) use ($keywords) {
+        foreach ($keywords as $keyword) {
+            if (strpos($line, $keyword) === 0) {
+                return true;
+            }
+        }
+    });
 
-        //if dtstart or dtend time is not 00:00:00, skip the event
+    /* var_dump($eventParsed);
+    exit; */
+
+    $eventData = [];
+
+    // Parse event data
+    foreach ($eventParsed as $line) {
+        $parts = explode(';', $line);
+
+        //if part 0 contains ":"
+        if (count($parts) != 2 || (count($parts) == 2 && strpos($parts[0], ':'))) {
+            $parts = explode(':', $line);
+        }
+
+        if (!array_key_exists(1, $parts)) {
+            var_dump("error with line parts");
+            var_dump($parts);
+            var_dump($line);
+            var_dump($eventParsed);
+            exit;
+        }
+
+        //if array key already exists, create array
+        #$eventData[$parts[0]] = $parts[1];        
+        if (array_key_exists($parts[0], $eventData)) {
+            if (is_array($eventData[$parts[0]])) {
+                $eventData[$parts[0]][] = $parts[1];
+            } else {
+                $eventData[$parts[0]] = [$eventData[$parts[0]], $parts[1]];
+            }
+        } else {
+            $eventData[$parts[0]] = $parts[1];
+        }
+    }
+
+    /* var_dump($eventData);
+    exit; */
+
+    if (isset($eventData['DTSTART']) && isset($eventData['DTEND'])) {
+        //handle dtstart and dtend with or without timezone
+        if (isset($eventData['EXDATE']) && is_array($eventData['EXDATE'])) {
+            var_dump("exdate is array");
+            var_dump($eventData['EXDATE']);
+            exit;
+        } else {
+            continue;
+        }
+
+        $dates = ['DTSTART', 'DTEND'];
+        if (isset($eventData['EXDATE'])) {
+            $dates[] = 'EXDATE';
+        }
+
+        foreach ($dates as $key) {
+            $parts = explode(':', $eventData[$key]);
+
+            if (count($parts) == 2) {
+                if (strpos($parts[0], 'DATE')) { //event doesn't have time set
+                    //skip the event if it's all day event
+                    continue 2;
+                } else {
+                    $eventData[$key] = new DateTime($parts[1], new DateTimeZone('Europe/Prague'));
+                }
+            } else {
+                //event has GMT+0 timezone and need to be converted to Europe/Prague
+                $eventData[$key] = new DateTime($parts[0], new DateTimeZone('GMT'));
+                $eventData[$key]->setTimezone(new DateTimeZone('Europe/Prague'));
+            }
+        }
+
+        // If DTSTART or DTEND time is 00:00:00, skip the event
         if ($eventData['DTSTART']->format('H:i:s') == '00:00:00' || $eventData['DTEND']->format('H:i:s') == '00:00:00') {
             continue;
         }
@@ -95,13 +165,11 @@ foreach($ics as $event) {
             unset($eventData['DESCRIPTION'][array_search('povinný', $descLower)]);
         }
     }
-
     
     if (isset($eventData['RRULE'])) {
         $rrule = explode(';', $eventData['RRULE']);
         $rrule = explode('=', $rrule[1]);
 
-        //Second part could be "COUNT=X" (number of repeats) or "UNTIL=20240817T215959Z" (timestamp)
         $rruleType = $rrule[0];
         $rruleValue = $rrule[1];
 
@@ -113,6 +181,8 @@ foreach($ics as $event) {
                 $exdates[] = (new DateTime($exdate, new DateTimeZone('Europe/Prague')))->format('Y-m-d');
             }
             } else {
+                var_dump($eventData['EXDATE']);
+                exit;
                 $exdates = [(new DateTime($eventData['EXDATE'], new DateTimeZone('Europe/Prague')))->format('Y-m-d')];
             }
         } else {
@@ -142,29 +212,35 @@ foreach($ics as $event) {
             }
         }
 
-        #check if event is not exception, then continue
+        // check if event is not exception, then continue
         if (in_array($eventData['DTSTART']->format('Y-m-d'), $exdates)) {
             continue;
         }
     }
 
-    //check if the event date is in selected range
+    // Handle recurrence exceptions
+    if (isset($eventData['RECURRENCE-ID'])) {
+        $recurrenceId = new DateTime($eventData['RECURRENCE-ID'], new DateTimeZone('Europe/Prague'));
+        $recurrences[$recurrenceId->format('Y-m-d H:i:s')] = $eventData;
+        continue;
+    }
+
+    // Check if the event date is in the selected range
     if ($eventData['DTSTART'] >= $startDate && $eventData['DTSTART'] <= $endDate) {
         $events[] = $eventData;
     }
 }
 
-/* var_dump($events);
-exit; */
-
-//if no events, redirect back
-if(empty($events)) {
-    $_SESSION['error'] = 'Nebyly nalezeny žádné události v zadaném rozmezí.';
-    header('Location: index.php');
-    exit();
-} else {
-    unset($_SESSION['error']);
+foreach ($events as &$event) {
+    $eventKey = $event['DTSTART']->format('Y-m-d H:i:s');
+    if (isset($recurrences[$eventKey])) {
+        $event = $recurrences[$eventKey];
+    }
 }
+
+var_dump('end of events');
+var_dump($events);
+exit;
 
 //group events by single days
 $days = [];

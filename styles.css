@@ -3,8 +3,7 @@ body {
     print-color-adjust:exact !important;
 }
 @media print {
-    .pagebreak { page-break-before: always; 
-    }
+    .pagebreak { page-break-before: always; }
 }
 @font-face {
     font-family: 'themix';
@@ -23,6 +22,10 @@ body {
     src: url('fonts/skautbold.ttf') format('truetype');
     font-style: normal;
     font-weight: normal;
+}
+@page {
+    size: A4;
+    margin: 10mm;
 }
 .box {
     padding-top: 0.25rem;

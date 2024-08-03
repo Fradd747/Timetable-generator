@@ -20,6 +20,24 @@ $startDate = new DateTime($dateRange[0]);
 $endDate = new DateTime($dateRange[1]);
 $endDate->add(new DateInterval('P1D')); //add one day
 
+function convertDate($date) {
+    $parts = explode(':', $date);
+
+    if (count($parts) == 2) {
+        if (strpos($parts[0], 'DATE')) { //event doesn't have time set
+            return False;
+        } else {
+            return new DateTime($parts[1], new DateTimeZone('Europe/Prague'));
+        }
+    } else {
+        //event has GMT+0 timezone and need to be converted to Europe/Prague
+        $date = new DateTime($parts[0], new DateTimeZone('GMT'));
+        $date->setTimezone(new DateTimeZone('Europe/Prague'));
+    }
+
+    return $date;
+}
+
 //get events in date range
 $events = [];
 $recurrences = [];
@@ -99,35 +117,27 @@ foreach ($ics as $event) {
 
     if (isset($eventData['DTSTART']) && isset($eventData['DTEND'])) {
         //handle dtstart and dtend with or without timezone
-        if (isset($eventData['EXDATE']) && is_array($eventData['EXDATE'])) {
+        /* if (isset($eventData['EXDATE']) && is_array($eventData['EXDATE'])) {
             var_dump("exdate is array");
             var_dump($eventData['EXDATE']);
             exit;
         } else {
             continue;
-        }
+        } */
 
         $dates = ['DTSTART', 'DTEND'];
-        if (isset($eventData['EXDATE'])) {
-            $dates[] = 'EXDATE';
-        }
 
         foreach ($dates as $key) {
-            $parts = explode(':', $eventData[$key]);
-
-            if (count($parts) == 2) {
-                if (strpos($parts[0], 'DATE')) { //event doesn't have time set
-                    //skip the event if it's all day event
-                    continue 2;
-                } else {
-                    $eventData[$key] = new DateTime($parts[1], new DateTimeZone('Europe/Prague'));
-                }
+            $date = convertDate($eventData[$key]);
+            if ($date) {
+                $eventData[$key] = $date;
             } else {
-                //event has GMT+0 timezone and need to be converted to Europe/Prague
-                $eventData[$key] = new DateTime($parts[0], new DateTimeZone('GMT'));
-                $eventData[$key]->setTimezone(new DateTimeZone('Europe/Prague'));
+                continue 2;
             }
         }
+
+        /* var_dump($eventData);
+        exit; */
 
         // If DTSTART or DTEND time is 00:00:00, skip the event
         if ($eventData['DTSTART']->format('H:i:s') == '00:00:00' || $eventData['DTEND']->format('H:i:s') == '00:00:00') {
@@ -165,6 +175,13 @@ foreach ($ics as $event) {
             unset($eventData['DESCRIPTION'][array_search('povinný', $descLower)]);
         }
     }
+
+    /* if ($eventData['SUMMARY'] == "Výběr partonů (Sáďa)") {
+        var_dump($eventData);
+        exit;
+    } else {
+        continue;
+    } */
     
     if (isset($eventData['RRULE'])) {
         $rrule = explode(';', $eventData['RRULE']);
@@ -173,17 +190,17 @@ foreach ($ics as $event) {
         $rruleType = $rrule[0];
         $rruleValue = $rrule[1];
 
+        #var_dump($rruleType, $rruleValue, $eventData['RRULE']);
+
         //collect all EXDATES (if there are multiple EXDATE is array, if there is only one, it's string)
         if (isset($eventData['EXDATE'])) {
             if (is_array($eventData['EXDATE'])) {
-            $exdates = [];
-            foreach ($eventData['EXDATE'] as $exdate) {
-                $exdates[] = (new DateTime($exdate, new DateTimeZone('Europe/Prague')))->format('Y-m-d');
-            }
+                $exdates = [];
+                foreach ($eventData['EXDATE'] as $exdate) {
+                    $exdates[] = convertDate($exdate)->format('Y-m-d');
+                }
             } else {
-                var_dump($eventData['EXDATE']);
-                exit;
-                $exdates = [(new DateTime($eventData['EXDATE'], new DateTimeZone('Europe/Prague')))->format('Y-m-d')];
+                $exdates = [convertDate($eventData['EXDATE'])->format('Y-m-d')];
             }
         } else {
             $exdates = [];
@@ -192,7 +209,8 @@ foreach ($ics as $event) {
         unset($eventData['RRULE']);
 
         if ($rruleType == 'UNTIL') {
-            $until = (new DateTime($rruleValue, new DateTimeZone('Europe/Prague')))->add(new DateInterval('P1D'));
+            #$until = (new DateTime($rruleValue, new DateTimeZone('Europe/Prague')))->add(new DateInterval('P1D'));
+            $until = convertDate($rruleValue)->add(new DateInterval('P1D'));
             //count number of days between DTSTART and UNTIL
             $count = $eventData['DTSTART']->diff($until)->days;
         } else {
@@ -220,27 +238,34 @@ foreach ($ics as $event) {
 
     // Handle recurrence exceptions
     if (isset($eventData['RECURRENCE-ID'])) {
-        $recurrenceId = new DateTime($eventData['RECURRENCE-ID'], new DateTimeZone('Europe/Prague'));
-        $recurrences[$recurrenceId->format('Y-m-d H:i:s')] = $eventData;
+        #$recurrenceId = new DateTime($eventData['RECURRENCE-ID'], new DateTimeZone('Europe/Prague'));
+        $recurrences[convertDate($eventData['RECURRENCE-ID'])->format('Y-m-d H:i:s')] = $eventData;
         continue;
     }
 
     // Check if the event date is in the selected range
     if ($eventData['DTSTART'] >= $startDate && $eventData['DTSTART'] <= $endDate) {
+        /* if ($eventData['SUMMARY'] == "Výběr partonů (Sáďa)") {
+            var_dump($eventData);
+            exit;
+        } */
         $events[] = $eventData;
     }
 }
 
+// Handle recurrence exceptions
 foreach ($events as &$event) {
     $eventKey = $event['DTSTART']->format('Y-m-d H:i:s');
     if (isset($recurrences[$eventKey])) {
         $event = $recurrences[$eventKey];
     }
 }
+unset($event);
 
-var_dump('end of events');
+#var_dump('end of events');
 var_dump($events);
 exit;
+
 
 //group events by single days
 $days = [];
@@ -257,8 +282,6 @@ foreach($days as $key => $day) {
     $days[$key] = $day;
 }
 
-/* var_dump($days);
-exit; */
 
 $groupedEvents = [];
 //group events happening at the same time

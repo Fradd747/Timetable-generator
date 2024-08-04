@@ -2,7 +2,7 @@
 
     function printEvent(bool $program = false, bool $required = false, DateTime $start, DateTime $end, string $summary, array $description = null, string $classes = '') {    
         //according to time, calculate height of box. 2rem = 30min
-        $height = (($end->getTimestamp() - $start->getTimestamp()) / 900) * 0.8;
+        $height = (($end->getTimestamp() - $start->getTimestamp()) / 900) * 0.75;
         $time = $start->format('H:i') .' - '. $end->format('H:i');
         //search $summary for any word from global array $food
         $food = false;

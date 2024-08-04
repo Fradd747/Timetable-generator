@@ -66,7 +66,7 @@ foreach ($ics as $event) {
         }
     }
 
-    $keywords = ['DTSTART', 'DTEND', 'RRULE', 'EXDATE', 'SUMMARY', 'DESCRIPTION', 'RECURRENCE-ID'];
+    $keywords = ['DTSTART', 'DTEND', 'RRULE', 'EXDATE', 'SUMMARY', 'DESCRIPTION', 'RECURRENCE-ID', 'UID'];
     
     //keep only lines with keywords
     $eventParsed = array_filter($eventParsed, function($line) use ($keywords) {
@@ -116,15 +116,6 @@ foreach ($ics as $event) {
     exit; */
 
     if (isset($eventData['DTSTART']) && isset($eventData['DTEND'])) {
-        //handle dtstart and dtend with or without timezone
-        /* if (isset($eventData['EXDATE']) && is_array($eventData['EXDATE'])) {
-            var_dump("exdate is array");
-            var_dump($eventData['EXDATE']);
-            exit;
-        } else {
-            continue;
-        } */
-
         $dates = ['DTSTART', 'DTEND'];
 
         foreach ($dates as $key) {
@@ -134,29 +125,73 @@ foreach ($ics as $event) {
             } else {
                 continue 2;
             }
-        }
-
-        /* var_dump($eventData);
-        exit; */
+        }                        
 
         // If DTSTART or DTEND time is 00:00:00, skip the event
         if ($eventData['DTSTART']->format('H:i:s') == '00:00:00' || $eventData['DTEND']->format('H:i:s') == '00:00:00') {
             continue;
         }
 
-        // Calculate the start and end dates for the month range
-        $startRange = clone $startDate;
-        $startRange->modify('-1 month');
-        $endRange = clone $endDate;
-        $endRange->modify('+1 month');
+        // parse rrule
+        if (isset($eventData['RRULE'])) {
+            $rrule = explode('=', explode(';', $eventData['RRULE'])[1]);
 
-        // Check if the event falls within the month range
-        if ($eventData['DTSTART'] < $startRange || $eventData['DTEND'] > $endRange) {
-            continue;
+            $rruleType = $rrule[0];
+            $rruleValue = $rrule[1];
+
+            if ($rruleType == 'UNTIL') {
+                $eventData['RRULE'] = convertDate($rruleValue);
+            } else {
+                // minus one, bcs first event is already in the array
+                $eventData['RRULE'] = clone $eventData['DTSTART'];                
+                $eventData['RRULE'] = $eventData['RRULE']->add(new DateInterval('P' . ($rruleValue - 1) . 'D'));
+            }
+
+            //if exdate exists, convert it to datetime
+            if (isset($eventData['EXDATE'])) {
+                if (is_array($eventData['EXDATE'])) {
+                    $exdates = [];
+                    foreach ($eventData['EXDATE'] as $exdate) {
+                        $exdates[] = convertDate($exdate)->format('Y-m-d');
+                    }
+                } else {
+                    $exdates = [convertDate($eventData['EXDATE'])->format('Y-m-d')];
+                }
+                $eventData['EXDATE'] = $exdates;
+            }
+            
+            //check if event is in the selected range. Must count with rule, which is recurring event from DTSTART to UNTIL (RRULE)
+            if ($eventData['RRULE'] < $startDate || $eventData['DTSTART'] > $endDate) {
+                /* if ($eventData['DTSTART']->format('y-m') == '24-08') {
+                    var_dump($eventData);
+                    var_dump($eventData['DTSTART'] < $startDate && $eventData['DTEND'] < $startDate, $eventData['DTSTART'] > $endDate && $eventData['DTEND'] > $endDate);
+                    exit;
+                } */
+                continue;
+            }
+        } else {            
+            //check if event is in the selected range            
+            if ($eventData['DTSTART'] > $endDate || $eventData['DTEND'] < $startDate) {
+                continue;
+            }
         }
+
+        /* if ($eventData['SUMMARY'] == 'Budíček' && $eventData['DTSTART']->format('y-m') == '24-08') {
+            var_dump($eventData);
+            exit;
+        } else {
+            continue;
+        } */
     } else {
         continue;
     }
+
+    /* if ($eventData['SUMMARY'] == 'Budíček') {
+        var_dump($eventData);
+        exit;
+    } else {
+        continue;
+    } */
 
     if (isset($eventData['SUMMARY'])) {
         $eventData['SUMMARY'] = str_replace('\,', ',', $eventData['SUMMARY']);
@@ -175,49 +210,9 @@ foreach ($ics as $event) {
             unset($eventData['DESCRIPTION'][array_search('povinný', $descLower)]);
         }
     }
-
-    /* if ($eventData['SUMMARY'] == "Výběr partonů (Sáďa)") {
-        var_dump($eventData);
-        exit;
-    } else {
-        continue;
-    } */
     
     if (isset($eventData['RRULE'])) {
-        $rrule = explode(';', $eventData['RRULE']);
-        $rrule = explode('=', $rrule[1]);
-
-        $rruleType = $rrule[0];
-        $rruleValue = $rrule[1];
-
-        #var_dump($rruleType, $rruleValue, $eventData['RRULE']);
-
-        //collect all EXDATES (if there are multiple EXDATE is array, if there is only one, it's string)
-        if (isset($eventData['EXDATE'])) {
-            if (is_array($eventData['EXDATE'])) {
-                $exdates = [];
-                foreach ($eventData['EXDATE'] as $exdate) {
-                    $exdates[] = convertDate($exdate)->format('Y-m-d');
-                }
-            } else {
-                $exdates = [convertDate($eventData['EXDATE'])->format('Y-m-d')];
-            }
-        } else {
-            $exdates = [];
-        }
-
-        unset($eventData['RRULE']);
-
-        if ($rruleType == 'UNTIL') {
-            #$until = (new DateTime($rruleValue, new DateTimeZone('Europe/Prague')))->add(new DateInterval('P1D'));
-            $until = convertDate($rruleValue)->add(new DateInterval('P1D'));
-            //count number of days between DTSTART and UNTIL
-            $count = $eventData['DTSTART']->diff($until)->days;
-        } else {
-            $count = $rruleValue;
-        }
-
-        for ($i=1; $i < $count; $i++) { 
+        for ($i=1; $i <= $eventData['DTSTART']->diff($eventData['RRULE'])->days; $i++) { 
             $parsedEvent = $eventData;
             $parsedEvent['DTSTART'] = clone $eventData['DTSTART'];
             $parsedEvent['DTEND'] = clone $eventData['DTEND'];
@@ -225,46 +220,48 @@ foreach ($ics as $event) {
             $parsedEvent['DTEND']->add(new DateInterval('P' . $i . 'D'));
 
             // check if the parsed event date is not in the exdates array and also in selected range
-            if (!in_array($parsedEvent['DTSTART']->format('Y-m-d'), $exdates) && $parsedEvent['DTSTART'] >= $startDate && $parsedEvent['DTSTART'] <= $endDate) {
+            if (!in_array($parsedEvent['DTSTART']->format('Y-m-d'), $eventData['EXDATE'] ?? []) && $parsedEvent['DTSTART'] >= $startDate && $parsedEvent['DTSTART'] <= $endDate) {
                 $events[] = $parsedEvent;
             }
         }
 
         // check if event is not exception, then continue
-        if (in_array($eventData['DTSTART']->format('Y-m-d'), $exdates)) {
+        if (in_array($eventData['DTSTART']->format('Y-m-d'), $eventData['EXDATE'] ?? [])) {
             continue;
         }
     }
 
     // Handle recurrence exceptions
     if (isset($eventData['RECURRENCE-ID'])) {
-        #$recurrenceId = new DateTime($eventData['RECURRENCE-ID'], new DateTimeZone('Europe/Prague'));
-        $recurrences[convertDate($eventData['RECURRENCE-ID'])->format('Y-m-d H:i:s')] = $eventData;
+        $recurrences[convertDate($eventData['RECURRENCE-ID'])->format('Y-m-d H:i:s')][$eventData['UID']] = $eventData;
         continue;
-    }
+    }    
 
-    // Check if the event date is in the selected range
-    if ($eventData['DTSTART'] >= $startDate && $eventData['DTSTART'] <= $endDate) {
-        /* if ($eventData['SUMMARY'] == "Výběr partonů (Sáďa)") {
-            var_dump($eventData);
-            exit;
-        } */
+    #var_dump($eventData);
+
+    #check if event dtstart and dtend are in date range
+    if ($eventData['DTSTART'] >= $startDate && $eventData['DTEND'] <= $endDate) {
         $events[] = $eventData;
     }
 }
 
+#var_dump($events);
+#var_dump($recurrences);
+#exit;
+
 // Handle recurrence exceptions
 foreach ($events as &$event) {
     $eventKey = $event['DTSTART']->format('Y-m-d H:i:s');
-    if (isset($recurrences[$eventKey])) {
-        $event = $recurrences[$eventKey];
+    if (isset($recurrences[$eventKey][$event['UID']])) {
+        $event = $recurrences[$eventKey][$event['UID']];
     }
 }
 unset($event);
 
 #var_dump('end of events');
-var_dump($events);
-exit;
+#exit;
+/* var_dump($events);
+exit; */
 
 
 //group events by single days
@@ -281,6 +278,8 @@ foreach($days as $key => $day) {
     });
     $days[$key] = $day;
 }
+
+ksort($days);
 
 
 $groupedEvents = [];

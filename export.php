@@ -3,7 +3,7 @@
 session_start();
 
 //redirect back if file, daterange or template is missing. template must be default or ursus
-if($_FILES['file']['size'] == 0 || !isset($_POST['daterange']) || !isset($_POST['template']) || !in_array($_POST['template'], ['default', 'ursus'])) {
+if($_FILES['file']['size'] == 0 || !isset($_POST['daterange']) || !isset($_POST['template']) || !in_array($_POST['template'], ['default', 'ursus', 'pecka'])) {
     header('Location: index.php');
     exit();
 }
@@ -209,6 +209,18 @@ foreach ($ics as $event) {
             $eventData['REQUIRED'] = true;
             unset($eventData['DESCRIPTION'][array_search('povinný', $descLower)]);
         }
+        if (in_array('aktivita', $descLower)) {
+            $eventData['ACTIVITY'] = true;
+            unset($eventData['DESCRIPTION'][array_search('aktivita', $descLower)]);
+        }
+        if (in_array('téma', $descLower)) {
+            $eventData['TOPIC'] = true;
+            unset($eventData['DESCRIPTION'][array_search('téma', $descLower)]);
+        }
+        if (in_array('organizační', $descLower)) {
+            $eventData['ORGANIZATIONAL'] = true;
+            unset($eventData['DESCRIPTION'][array_search('organizační', $descLower)]);
+        }        
     }
     
     if (isset($eventData['RRULE'])) {

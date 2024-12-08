@@ -1,6 +1,6 @@
 <?php 
 
-    function printEvent(DateTime $start, DateTime $end, string $summary, array $description = null, string $classes = '', bool $program = false, bool $required = false) {    
+    function printEvent(DateTime $start, DateTime $end, string $summary, array $description = null, string $classes = '', bool $activity = false, $topic = false, $organizational = false) {    
         //according to time, calculate height of box. 2rem = 30min
         $height = (($end->getTimestamp() - $start->getTimestamp()) / 900) * 0.75;
         $time = $start->format('H:i') .' - '. $end->format('H:i');
@@ -12,9 +12,9 @@
             }
         }
         echo '
-            <div class="box '. ($program ? 'gray_box' : '') . ($food ? 'black_box' : '') . ' min-h-['. $height .'rem] ' . $classes .'">
+            <div class="box '. ($activity ? 'bg-[#5E2281] border-[#5E2281] text-[#FCC11E]' : '') . ($topic ? 'bg-[#FCC11E] border-[#FCC11E] text-[#5E2281]' : '') . ($organizational ? 'bg-[#000000] border-[#000000] text-[#FCC11E]' : '') . ' min-h-['. $height .'rem] ' . $classes .'">
                 <div class="inner_box">        
-                    <p>'. $time .'</p>
+                    <p class="font-bold">'. $time .'</p>
                     <div>
                         <p class="font-bold">'. $summary .'</p>';
                         if (!is_null($description)) {
@@ -25,12 +25,6 @@
                         }
             echo '</div>
                 </div>';
-                if ($required) {
-                    echo '
-                    <div class="flex justify-end items-center pr-3">
-                        <img class="!h-11 !w-11" src="images/icons/mark.svg">
-                    </div>';
-                }
             echo '</div>';
     }
 
@@ -46,7 +40,7 @@
 </head>
 <body>
     <?php foreach ($days as $day => $events) { ?>
-        <h1 class="text-center font-['skautbold'] text-3xl mb-5"><?= $week_days[(new DateTime($day))->format('w')] . ' ' . (new DateTime($day))->format('d. m.') ?></h1>
+        <h1 class="text-center font-['skautbold'] text-3xl mb-5 text-[#5E2281]"><?= $week_days[(new DateTime($day))->format('w')] . ' ' . (new DateTime($day))->format('d. m. Y') ?></h1>
         <div id="boxes" class="flex gap-1 flex-col font-['themix']">
         
         <?php for ($i=0; $i < count($events); $i++) { 
@@ -66,17 +60,17 @@
                         if (array_filter($event, 'is_array') === $event) {
                             echo '<div class="flex flex-col gap-1">';
                             foreach ($event as $event) {
-                                printEvent($event['DTSTART'], $event['DTEND'], $event['SUMMARY'], $event['DESCRIPTION'] ?? null, '', ($event['PROGRAM'] ?? false), ($event['REQUIRED'] ?? false));
+                                printEvent($event['DTSTART'], $event['DTEND'], $event['SUMMARY'], $event['DESCRIPTION'] ?? null, '', ($event['ACTIVITY'] ?? false), ($event['TOPIC'] ?? false), ($event['ORGANIZATIONAL'] ?? false));
                             }
                             echo '</div>';
                         } else {
-                            printEvent($event['DTSTART'], $event['DTEND'], $event['SUMMARY'], $event['DESCRIPTION'] ?? null, !$isArrayOfArrays ? 'h-fit' : '', ($event['PROGRAM'] ?? false), ($event['REQUIRED'] ?? false));
+                            printEvent($event['DTSTART'], $event['DTEND'], $event['SUMMARY'], $event['DESCRIPTION'] ?? null, !$isArrayOfArrays ? 'h-fit' : '', ($event['ACTIVITY'] ?? false), ($event['TOPIC'] ?? false), ($event['ORGANIZATIONAL'] ?? false));
                         }
                     }
                 echo '</div>';
                 continue;
             }
-            printEvent($events[$i][0]['DTSTART'], $events[$i][0]['DTEND'], $events[$i][0]['SUMMARY'], $events[$i][0]['DESCRIPTION'] ?? null, '', ($events[$i][0]['PROGRAM'] ?? false), ($events[$i][0]['REQUIRED'] ?? false));    
+            printEvent($events[$i][0]['DTSTART'], $events[$i][0]['DTEND'], $events[$i][0]['SUMMARY'], $events[$i][0]['DESCRIPTION'] ?? null, '', ($events[$i][0]['ACTIVITY'] ?? false), ($events[$i][0]['TOPIC'] ?? false), ($events[$i][0]['ORGANIZATIONAL'] ?? false));
         }
         //if it's not last iteration, add page break
         if($day != array_key_last($days)) {

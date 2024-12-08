@@ -1,6 +1,6 @@
 <?php 
 
-    function printEvent(bool $program = false, bool $required = false, DateTime $start, DateTime $end, string $summary, array $description = null, string $classes = '') {    
+    function printEvent (DateTime $start, DateTime $end, string $summary, array $description = null, string $classes = '', bool $program = false, bool $required = false) {    
         //according to time, calculate height of box. 2rem = 30min
         $height = (($end->getTimestamp() - $start->getTimestamp()) / 900) * 0.75;
         $time = $start->format('H:i') .' - '. $end->format('H:i');
@@ -51,7 +51,7 @@
         <div class="grid grid-cols-[70%_30%] avoid-break">
                 <div class="flex flex-col gap-1 avoid-break">
                     <?php for ($i=0; $i < 2; $i++) { 
-                        printEvent(($events[$i][0]['PROGRAM'] ?? false), ($events[$i][0]['REQUIRED'] ?? false), $events[$i][0]['DTSTART'], $events[$i][0]['DTEND'], $events[$i][0]['SUMMARY'], $events[$i][0]['DESCRIPTION'] ?? null);
+                        printEvent($events[$i][0]['DTSTART'], $events[$i][0]['DTEND'], $events[$i][0]['SUMMARY'], $events[$i][0]['DESCRIPTION'] ?? null, '', ($events[$i][0]['PROGRAM'] ?? false), ($events[$i][0]['REQUIRED'] ?? false));
                     } ?>
             </div>
                 <div class="flex justify-center items-center avoid-break">
@@ -78,17 +78,17 @@
                         if (array_filter($event, 'is_array') === $event) {
                             echo '<div class="flex flex-col gap-1 avoid-break">';
                             foreach ($event as $event) {
-                                printEvent(($event['PROGRAM'] ?? false), ($event['REQUIRED'] ?? false), $event['DTSTART'], $event['DTEND'], $event['SUMMARY'], $event['DESCRIPTION'] ?? null);
+                                printEvent($event['DTSTART'], $event['DTEND'], $event['SUMMARY'], $event['DESCRIPTION'] ?? null, '', ($event['PROGRAM'] ?? false), ($event['REQUIRED'] ?? false));
                             }
                             echo '</div>';
                         } else {
-                            printEvent(($event['PROGRAM'] ?? false), ($event['REQUIRED'] ?? false), $event['DTSTART'], $event['DTEND'], $event['SUMMARY'], $event['DESCRIPTION'] ?? null, !$isArrayOfArrays ? 'h-fit' : '');
+                            printEvent($event['DTSTART'], $event['DTEND'], $event['SUMMARY'], $event['DESCRIPTION'] ?? null, (!$isArrayOfArrays ? 'h-fit' : ''), ($event['PROGRAM'] ?? false), ($event['REQUIRED'] ?? false));
                         }
                     }
                 echo '</div>';
                 continue;
             }
-            printEvent(($events[$i][0]['PROGRAM'] ?? false), ($events[$i][0]['REQUIRED'] ?? false), $events[$i][0]['DTSTART'], $events[$i][0]['DTEND'], $events[$i][0]['SUMMARY'], $events[$i][0]['DESCRIPTION'] ?? null);    
+            printEvent($events[$i][0]['DTSTART'], $events[$i][0]['DTEND'], $events[$i][0]['SUMMARY'], $events[$i][0]['DESCRIPTION'] ?? null, '', ($events[$i][0]['PROGRAM'] ?? false), ($events[$i][0]['REQUIRED'] ?? false));    
         }
         //if it's not last iteration, add page break
         if($day != array_key_last($days)) {

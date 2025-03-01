@@ -199,7 +199,41 @@
 <script>
     $(function() {
         $('input[name="daterange"]').daterangepicker({
-            opens: 'left'
+            opens: 'left',
+            "locale": {
+                "format": "DD.MM.YYYY",
+                "separator": " - ",
+                "applyLabel": "Použít",
+                "cancelLabel": "Zrušit",
+                "fromLabel": "Od",
+                "toLabel": "Do",
+                "customRangeLabel": "Vlastní",
+                "weekLabel": "T",
+                "daysOfWeek": [
+                    "Ne",
+                    "Po",
+                    "Út",
+                    "St",
+                    "Čt",
+                    "Pá",
+                    "So"
+                ],
+                "monthNames": [
+                    "Leden",
+                    "Únor",
+                    "Březen",
+                    "Duben",
+                    "Květen",
+                    "Červen",
+                    "Červenec",
+                    "Srpen",
+                    "Září",
+                    "Říjen",
+                    "Listopad",
+                    "Prosinec"
+                ],
+                "firstDay": 1
+            }
         });
     });
 </script>

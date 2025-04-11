@@ -1,4 +1,89 @@
-<?php session_start(); ?>
+<?php 
+session_start(); 
+
+// Handle logout
+if (isset($_GET['logout'])) {
+    unset($_SESSION['google_token']);
+    unset($_SESSION['google_user']);
+    unset($_SESSION['selected_calendar']);
+    unset($_SESSION['daterange']);
+    unset($_SESSION['template']);
+    header('Location: index.php');
+    exit();
+}
+
+$is_authenticated = isset($_SESSION['google_token']);
+$calendars = [];
+
+if ($is_authenticated) {
+    // Load Composer's autoloader
+    require_once __DIR__ . '/vendor/autoload.php';
+
+    // Load configuration
+    $config = require_once __DIR__ . '/google/config.php';
+
+    // Load calendar API functions
+    require_once __DIR__ . '/google/calendar_api.php';
+
+    // Create and configure Google client
+    $client = new Google\Client();
+    $client->setClientId($config['client_id']);
+    $client->setClientSecret($config['client_secret']);
+    $client->setRedirectUri($config['redirect_uri']); // Ensure this points correctly, likely index.php or a handler
+
+    // Set the access token
+    $client->setAccessToken($_SESSION['google_token']);
+
+    // Refresh token if expired
+    if ($client->isAccessTokenExpired()) {
+        if ($client->getRefreshToken()) {
+            try {
+                $client->fetchAccessTokenWithRefreshToken($client->getRefreshToken());
+                $_SESSION['google_token'] = $client->getAccessToken();
+            } catch (Exception $e) {
+                // Handle refresh token failure, e.g., redirect to auth
+                unset($_SESSION['google_token']);
+                unset($_SESSION['google_user']);
+                header('Location: google/auth.php?error=refresh_failed');
+                exit();
+            }
+        } else {
+            // No refresh token, redirect to auth page
+            unset($_SESSION['google_token']);
+            unset($_SESSION['google_user']);
+            header('Location: google/auth.php');
+            exit();
+        }
+    }
+
+    // Get list of calendars if authenticated
+    try {
+        $calendars = getCalendarList($client);
+    } catch (Exception $e) {
+        // Handle error fetching calendars, maybe logout or show error
+        // For now, we can log the error and potentially show a message
+        error_log("Error fetching calendar list: " . $e->getMessage());
+        // Optionally unset session and redirect
+        unset($_SESSION['google_token']);
+        unset($_SESSION['google_user']);
+        // Redirect or display an error message
+        header('Location: index.php?error=calendar_fetch_failed');
+        exit();
+    }
+
+
+    // Process form submission if authenticated and form submitted
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['calendar_id']) && isset($_POST['daterange']) && isset($_POST['template'])) {
+        $_SESSION['selected_calendar'] = $_POST['calendar_id'];
+        $_SESSION['daterange'] = $_POST['daterange'];
+        $_SESSION['template'] = $_POST['template'];
+
+        // Always redirect to the standard export page
+        header('Location: google_export.php');
+        exit();
+    }
+}
+?>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -45,52 +130,7 @@
         }
     </style>
 </head>
-<body x-data="{ export_popup: false, event_popup: false }">
-    <!-- calendar export tutorial -->
-    <div x-cloak x-show="export_popup" x-transition class="w-full h-full fixed top-0 left-0 flex justify-center items-center py-5 z-10">
-        <div @click.outside="export_popup = false" class="w-full h-full pt-10 max-w-2xl mx-3 md:m-0 p-3 bg-white rounded-xl myshadow relative">
-            <img @click="export_popup = false" src="images/icons/cross.svg" class="w-6 absolute top-2 z-20 right-2 cursor-pointer transition hover:scale-110">
-            <ul aria-label="Activity feed" role="feed" class="h-full overflow-y-auto relative flex flex-col gap-6 py-6 pl-6 before:absolute before:top-0 before:left-6 before:h-full h-fit before:border before:-translate-x-1/2 before:border-slate-200 before:border-dashed after:absolute after:top-6 after:left-6 after:bottom-6 after:border after:-translate-x-1/2 after:border-slate-200 ">
-                <li class="relative pl-3">
-                    <h3 class="font-bold">Jak exportovat ICS soubor z Google kalendáře?</h3>
-                </li>
-                <li class="relative pl-6 flex items-center">
-                    <span class="absolute left-0 z-10 flex items-center justify-center w-8 h-8 -translate-x-1/2 rounded-full text-slate-700 ring-2 ring-white bg-slate-200 ">
-                        1
-                    </span>
-                    <div class="flex flex-col flex-1 gap-0">
-                        <p class="text-xs text-slate-500">Otevřete <a class="text-blue-500" href="https://calendar.google.com/">Google Kalendář</a> ve svém prohlížeči.</p>
-                    </div>
-                </li>
-                <li class="relative pl-6 flex items-start">
-                    <span class="absolute left-0 z-10 flex items-center justify-center w-8 h-8 -translate-x-1/2 rounded-full text-slate-700 ring-2 ring-white bg-slate-200 ">
-                        2
-                    </span>
-                    <div class="flex flex-col flex-1 gap-0">
-                        <p class="text-xs text-slate-500">Na levé straně okna Kalendáře klikněte na tři vodorovné tečky vedle názvu kalendáře který chcete exportovat. Klepněte na "<b>Nastavení a sdílení</b>" (Settings and sharing).</p>
-                        <img src="images/settings.jpg" class="w-80 rounded-md border border-gray-200 mt-1">
-                    </div>
-                </li>
-                <li class="relative pl-6 flex items-start">
-                    <span class="absolute left-0 z-10 flex items-center justify-center w-8 h-8 -translate-x-1/2 rounded-full text-slate-700 ring-2 ring-white bg-slate-200 ">
-                        3
-                    </span>
-                    <div class="flex flex-col flex-1 gap-0">
-                        <p class="text-xs text-slate-500">Klikněte na tlačítko "<b>Exportovat kalendář</b>" (Export calendar) a soubor se začne stahovat do vašeho počítače.</p>
-                        <img src="images/download.jpg" class="w-80 rounded-md border border-gray-200 mt-1">
-                    </div>
-                </li>
-                <li class="relative pl-6 flex items-center">
-                    <span class="absolute left-0 z-10 flex items-center justify-center w-8 h-8 -translate-x-1/2 rounded-full text-slate-700 ring-2 ring-white bg-slate-200 ">
-                        4
-                    </span>
-                    <div class="flex flex-col flex-1 gap-0">
-                        <p class="text-xs text-slate-500">Stažený archiv rozbalte pomocí libovolného programu jako je například <a class="text-blue-500" href="https://www.7-zip.org/">7Zip</a> nebo <a class="text-blue-500" href="https://www.rar.cz/download.php">WinRar</a>, čímž získáte požadovaný soubor .ics .</p>
-                    </div>
-                </li>
-            </ul>
-        </div>
-    </div>
+<body x-data="{ event_popup: false }">
     <!-- calendar export tutorial -->
     <div x-cloak x-show="event_popup" x-transition class="w-full h-full fixed top-0 left-0 flex justify-center items-center py-5 z-10">
         <div @click.outside="event_popup = false" class="w-full h-full pt-10 max-w-2xl mx-3 md:m-0 p-3 bg-white rounded-xl myshadow relative">
@@ -131,37 +171,112 @@
             <div class="flex justify-center w-full">
                 <img src="images/logo.svg" class="h-6 sm:h-9 m-5 mb-8" alt="Logo" />
             </div>
-            <form action="export.php" method="post" class="flex flex-col gap-3 items-start font-['themix']" enctype="multipart/form-data">
-                <div class="flex flex-col gap-1">
-                    <div class="flex gap-1 flex-row items-base">
-                        <label for="file">ICS export z Google kalendáře</label>
-                        <img @click="export_popup = !export_popup" src="images/icons/question.svg" class="w-6 cursor-pointer transition hover:scale-110">
+
+            <?php if ($is_authenticated && isset($_SESSION['google_user'])): ?>
+                <!-- Authenticated State: Calendar Selection Form -->
+                <div class="mb-4 flex items-center justify-between space-x-3 p-2 bg-gray-100 rounded-lg">
+                    <div class="flex items-center gap-3">
+                        <img src="<?php echo htmlspecialchars($_SESSION['google_user']['picture']); ?>" alt="Profile" class="w-10 h-10 rounded-full">
+                        <div>
+                            <div class="font-medium"><?php echo htmlspecialchars($_SESSION['google_user']['name']); ?></div>
+                            <div class="text-sm text-gray-500"><?php echo htmlspecialchars($_SESSION['google_user']['email']); ?></div>
+                        </div>
                     </div>
-                    <input type="file" name="file" id="file" accept=".ics" required>
+                    <a href="index.php?logout=1" class="ml-auto text-sm text-gray-700 hover:text-gray-900 border border-gray-300 rounded-lg px-3 py-1.5 bg-gray-50 transition duration-150 ease-in-out shadow-sm hover:shadow-md">Odhlásit</a>
                 </div>
-                <div class="flex flex-col gap-1">
-                    <div class="flex gap-1 flex-row items-base">
-                        <label for="template">Šablona</label>
-                        <img @click="event_popup = !event_popup" src="images/icons/question.svg" class="w-6 cursor-pointer transition hover:scale-110">
+
+                <?php if (isset($_GET['error'])): ?>
+                    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+                        <strong class="font-bold">Chyba:</strong>
+                        <span class="block sm:inline">
+                            <?php
+                                switch ($_GET['error']) {
+                                    case 'refresh_failed':
+                                        echo "Nepodařilo se obnovit přihlášení. Prosím, přihlaste se znovu.";
+                                        break;
+                                    case 'calendar_fetch_failed':
+                                        echo "Nepodařilo se načíst seznam kalendářů. Zkuste to prosím znovu.";
+                                        break;
+                                    default:
+                                        echo "Nastala neznámá chyba.";
+                                }
+                            ?>
+                        </span>
                     </div>
-                    <select name="template" class="bg-gray-50 px-2 py-1.5 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block min-w-[12rem] w-full dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-                        <option value="default" selected>Výchozí</option>
-                        <option value="ursus">VK Ursus</option>
-                        <option value="pecka">RK Pecka</option>
-                    </select>
+                <?php endif; ?>
+
+
+                <form action="index.php" method="post" class="flex flex-col mb-1 gap-3 items-start font-['themix']">
+                    <div class="flex flex-col gap-1 w-full">
+                        <label for="calendar_id" class="font-medium">Vyberte kalendář</label>
+                        <select name="calendar_id" id="calendar_id" class="bg-gray-50 px-2 py-1.5 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full" required>
+                            <?php foreach ($calendars as $calendar): ?>
+                                <option value="<?php echo htmlspecialchars($calendar['id']); ?>" <?php echo $calendar['primary'] ? 'selected' : ''; ?>>
+                                    <?php echo htmlspecialchars($calendar['summary']); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+
+                    <div class="flex flex-col gap-1 w-full">
+                        <div class="flex gap-1 flex-row items-center">
+                            <label for="template" class="font-medium">Šablona</label>
+                            <img @click="event_popup = !event_popup" src="images/icons/question.svg" class="w-6 cursor-pointer transition hover:scale-110" alt="Help">
+                        </div>
+                        <select name="template" id="template" class="bg-gray-50 px-2 py-1.5 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full" required>
+                            <option value="default" selected>Výchozí</option>
+                            <option value="ursus">VK Ursus</option>
+                            <option value="pecka">RK Pecka</option>
+                        </select>
+                    </div>
+
+                    <div class="flex flex-col gap-1 w-full">
+                         <label for="daterange" class="font-medium">Výběr dnů</label>
+                        <input type="text" name="daterange" id="daterange" class="bg-gray-50 px-2 py-1.5 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full" required/>
+                    </div>
+
+                    <div class="flex w-full mt-3">
+                        <button type="submit" class="shadow-lg border rounded-lg p-2 hover:ring-2 hover:ring-blue-300 transition duration-150 ease-in-out bg-blue-500 text-white flex-grow">Vygenerovat</button>
+                    </div>
+                </form>
+
+            <?php else: ?>
+                 <!-- Not Authenticated State: Login Button -->
+                 <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 text-center">
+                    <h2 class="text-lg font-semibold mb-2">Google Kalendář API</h2>
+                    <p class="text-sm text-gray-600 mb-3">Pro pokračování se přihlaste pomocí Google účtu.</p>
+                     <?php if (isset($_GET['error'])): ?>
+                    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+                        <strong class="font-bold">Chyba:</strong>
+                        <span class="block sm:inline">
+                             <?php
+                                switch ($_GET['error']) {
+                                    case 'refresh_failed':
+                                        echo "Nepodařilo se obnovit přihlášení. Prosím, přihlaste se znovu.";
+                                        break;
+                                    case 'calendar_fetch_failed':
+                                        echo "Nepodařilo se načíst seznam kalendářů. Zkuste to prosím znovu.";
+                                        break;
+                                    default:
+                                        echo "Nastala neznámá chyba při přihlašování.";
+                                }
+                            ?>
+                        </span>
+                    </div>
+                    <?php endif; ?>
+                    <a href="google/auth.php" class="inline-flex items-center justify-center gap-2 bg-white border border-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg hover:bg-gray-50 transition-all shadow-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 186.69 190.5">
+                            <g transform="translate(1184.583 765.171)">
+                                <path clip-path="none" mask="none" d="M-1089.333-687.239v36.888h51.262c-2.251 11.863-9.006 21.908-19.137 28.662l30.913 23.986c18.011-16.625 28.402-41.044 28.402-70.052 0-6.754-.606-13.249-1.732-19.483z" fill="#4285f4"/>
+                                <path clip-path="none" mask="none" d="M-1142.714-651.791l-6.972 5.337-24.679 19.223h0c15.673 31.086 47.796 52.561 85.03 52.561 25.717 0 47.278-8.486 63.038-23.033l-30.913-23.986c-8.486 5.715-19.31 9.179-32.125 9.179-24.765 0-45.806-16.712-53.34-39.226z" fill="#34a853"/>
+                                <path clip-path="none" mask="none" d="M-1174.365-712.61c-6.494 12.815-10.217 27.276-10.217 42.689s3.723 29.874 10.217 42.689c0 .086 31.693-24.592 31.693-24.592-1.905-5.715-3.031-11.776-3.031-18.098s1.126-12.383 3.031-18.098z" fill="#fbbc05"/>
+                                <path clip-path="none" mask="none" d="M-1089.333-727.244c14.028 0 26.497 4.849 36.455 14.201l27.276-27.276c-16.539-15.413-38.013-24.852-63.731-24.852-37.234 0-69.359 21.388-85.032 52.561l31.692 24.592c7.533-22.514 28.575-39.226 53.34-39.226z" fill="#ea4335"/>
+                            </g>
+                        </svg>
+                        Přihlásit se pomocí Google
+                    </a>
                 </div>
-                <div class="flex flex-col gap-1">
-                    <label for="file">Výběr dnů</label>
-                    <input type="text" name="daterange" class="p-1 border rounded-lg" required/>
-                    <?php 
-                        if (isset($_SESSION['error'])) {
-                            echo '<div class="bg-red-200 border border-red-400 text-red-700 text-sm p-1 rounded-md relative" role="alert">'.$_SESSION['error'].'</div>';
-                            unset($_SESSION['error']);
-                        }
-                    ?>
-                </div>
-                <button type="submit" class="shadow-lg border rounded-lg p-2 hover:scale-105 transition">Vygenerovat</button>
-            </form>
+            <?php endif; ?>
         </div>
     </div>
     <footer class="bg-white dark:bg-gray-800">
@@ -198,43 +313,29 @@
 </body>
 <script>
     $(function() {
-        $('input[name="daterange"]').daterangepicker({
-            opens: 'left',
-            "locale": {
-                "format": "DD.MM.YYYY",
-                "separator": " - ",
-                "applyLabel": "Použít",
-                "cancelLabel": "Zrušit",
-                "fromLabel": "Od",
-                "toLabel": "Do",
-                "customRangeLabel": "Vlastní",
-                "weekLabel": "T",
-                "daysOfWeek": [
-                    "Ne",
-                    "Po",
-                    "Út",
-                    "St",
-                    "Čt",
-                    "Pá",
-                    "So"
-                ],
-                "monthNames": [
-                    "Leden",
-                    "Únor",
-                    "Březen",
-                    "Duben",
-                    "Květen",
-                    "Červen",
-                    "Červenec",
-                    "Srpen",
-                    "Září",
-                    "Říjen",
-                    "Listopad",
-                    "Prosinec"
-                ],
-                "firstDay": 1
-            }
-        });
+        // Initialize daterangepicker only if the input exists (i.e., user is logged in)
+        if ($('input[name="daterange"]').length) {
+            $('input[name="daterange"]').daterangepicker({
+                opens: 'left',
+                "locale": {
+                    "format": "DD.MM.YYYY",
+                    "separator": " - ",
+                    "applyLabel": "Použít",
+                    "cancelLabel": "Zrušit",
+                    "fromLabel": "Od",
+                    "toLabel": "Do",
+                    "customRangeLabel": "Vlastní",
+                    "weekLabel": "T",
+                    "daysOfWeek": [
+                        "Ne", "Po", "Út", "St", "Čt", "Pá", "So"
+                    ],
+                    "monthNames": [
+                        "Leden", "Únor", "Březen", "Duben", "Květen", "Červen", "Červenec", "Srpen", "Září", "Říjen", "Listopad", "Prosinec"
+                    ],
+                    "firstDay": 1
+                }
+            });
+        }
     });
 </script>
 </html>

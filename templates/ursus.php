@@ -50,9 +50,14 @@
         <!-- first two columns -->
         <div class="grid grid-cols-[70%_30%] avoid-break">
                 <div class="flex flex-col gap-1 avoid-break">
-                    <?php for ($i=0; $i < 2; $i++) { 
-                        printEvent($events[$i][0]['DTSTART'], $events[$i][0]['DTEND'], $events[$i][0]['SUMMARY'], $events[$i][0]['DESCRIPTION'] ?? null, '', ($events[$i][0]['PROGRAM'] ?? false), ($events[$i][0]['REQUIRED'] ?? false));
-                    } ?>
+                    <?php
+                    if (isset($events[0]) && isset($events[0][0])) {
+                        printEvent($events[0][0]['DTSTART'], $events[0][0]['DTEND'], $events[0][0]['SUMMARY'], $events[0][0]['DESCRIPTION'] ?? null, '', ($events[0][0]['PROGRAM'] ?? false), ($events[0][0]['REQUIRED'] ?? false));
+                    }
+                    if (isset($events[1]) && isset($events[1][0])) {
+                        printEvent($events[1][0]['DTSTART'], $events[1][0]['DTEND'], $events[1][0]['SUMMARY'], $events[1][0]['DESCRIPTION'] ?? null, '', ($events[1][0]['PROGRAM'] ?? false), ($events[1][0]['REQUIRED'] ?? false));
+                    }
+                    ?>
             </div>
                 <div class="flex justify-center items-center avoid-break">
                     <div class="flex flex-row gap-1 justify-center items-center w-[85%] avoid-break">

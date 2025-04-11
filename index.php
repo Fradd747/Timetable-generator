@@ -242,40 +242,72 @@ if ($is_authenticated) {
 
             <?php else: ?>
                  <!-- Not Authenticated State: Login Button -->
-                 <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 text-center">
-                    <h2 class="text-lg font-semibold mb-2">Google Kalendář API</h2>
-                    <p class="text-sm text-gray-600 mb-3">Pro pokračování se přihlaste pomocí Google účtu.</p>
-                     <?php if (isset($_GET['error'])): ?>
-                    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
-                        <strong class="font-bold">Chyba:</strong>
-                        <span class="block sm:inline">
-                             <?php
-                                switch ($_GET['error']) {
-                                    case 'refresh_failed':
-                                        echo "Nepodařilo se obnovit přihlášení. Prosím, přihlaste se znovu.";
-                                        break;
-                                    case 'calendar_fetch_failed':
-                                        echo "Nepodařilo se načíst seznam kalendářů. Zkuste to prosím znovu.";
-                                        break;
-                                    default:
-                                        echo "Nastala neznámá chyba při přihlašování.";
-                                }
-                            ?>
-                        </span>
-                    </div>
-                    <?php endif; ?>
-                    <a href="google/auth.php" class="inline-flex items-center justify-center gap-2 bg-white border border-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg hover:bg-gray-50 transition-all shadow-sm">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 186.69 190.5">
-                            <g transform="translate(1184.583 765.171)">
-                                <path clip-path="none" mask="none" d="M-1089.333-687.239v36.888h51.262c-2.251 11.863-9.006 21.908-19.137 28.662l30.913 23.986c18.011-16.625 28.402-41.044 28.402-70.052 0-6.754-.606-13.249-1.732-19.483z" fill="#4285f4"/>
-                                <path clip-path="none" mask="none" d="M-1142.714-651.791l-6.972 5.337-24.679 19.223h0c15.673 31.086 47.796 52.561 85.03 52.561 25.717 0 47.278-8.486 63.038-23.033l-30.913-23.986c-8.486 5.715-19.31 9.179-32.125 9.179-24.765 0-45.806-16.712-53.34-39.226z" fill="#34a853"/>
-                                <path clip-path="none" mask="none" d="M-1174.365-712.61c-6.494 12.815-10.217 27.276-10.217 42.689s3.723 29.874 10.217 42.689c0 .086 31.693-24.592 31.693-24.592-1.905-5.715-3.031-11.776-3.031-18.098s1.126-12.383 3.031-18.098z" fill="#fbbc05"/>
-                                <path clip-path="none" mask="none" d="M-1089.333-727.244c14.028 0 26.497 4.849 36.455 14.201l27.276-27.276c-16.539-15.413-38.013-24.852-63.731-24.852-37.234 0-69.359 21.388-85.032 52.561l31.692 24.592c7.533-22.514 28.575-39.226 53.34-39.226z" fill="#ea4335"/>
-                            </g>
-                        </svg>
-                        Přihlásit se pomocí Google
-                    </a>
-                </div>
+                 <div x-data="{ showIntro: true }" class="flex flex-col">
+                     <div x-show="showIntro" 
+                          x-transition:enter="transition ease-out duration-300"
+                          x-transition:enter-start="opacity-0 transform scale-95"
+                          x-transition:enter-end="opacity-100 transform scale-100"
+                          x-transition:leave="transition ease-in duration-200"
+                          x-transition:leave-start="opacity-100 transform scale-100"
+                          x-transition:leave-end="opacity-0 transform scale-95"
+                          class="flex flex-col bg-gray-50 p-4 rounded-lg border border-gray-200 text-center">
+                          <h1 class="text-lg font-semibold mb-2">Jak to funguje?</h1>
+                          <p class="text-sm text-gray-600 mb-3">Do Google kalendáře si přidejte jednotlivé programové bloky dle dnů na vašem táboře, kurzu nebo jakékoliv jiné akci. Pak se stačí jen zde přihlásit skrze svůj Google účet a vygenerovat harmonogram, který si můžete stáhnout nebo vytisknout.</p>
+                          <button @click="showIntro = false" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 font-medium self-center transition duration-150 ease-in-out">Chci to zkusit!</button>
+                      </div>
+  
+                      <div x-show="!showIntro" 
+                           x-transition:enter="transition ease-out duration-300 delay-200"
+                           x-transition:enter-start="opacity-0 transform scale-95"
+                           x-transition:enter-end="opacity-100 transform scale-100"
+                           x-transition:leave="transition ease-in duration-200"
+                           x-transition:leave-start="opacity-100 transform scale-100"
+                           x-transition:leave-end="opacity-0 transform scale-95"
+                           class="flex flex-col gap-4">
+                           <div class="bg-blue-50 p-4 rounded-lg border border-blue-200 text-center">
+                               <h2 class="text-lg font-semibold mb-2">Jak to vypadá?</h2>
+                               <p class="text-sm text-gray-600 mb-3">Vygenerujte si ukázkový harmonogram bez přihlášení.</p>
+                               <a href="sample.php" class="inline-flex items-center justify-center gap-2 bg-blue-500 hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-lg transition-all shadow-sm">
+                                   Ukázkový harmonogram
+                               </a>
+                           </div>
+                       
+                           <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 text-center">
+                              <h2 class="text-lg font-semibold mb-2">Google Kalendář API</h2>
+                              <p class="text-sm text-gray-600 mb-3">Pro pokračování se přihlaste pomocí Google účtu.</p>
+                               <?php if (isset($_GET['error'])): ?>
+                              <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+                                  <strong class="font-bold">Chyba:</strong>
+                                  <span class="block sm:inline">
+                                       <?php
+                                          switch ($_GET['error']) {
+                                              case 'refresh_failed':
+                                                  echo "Nepodařilo se obnovit přihlášení. Prosím, přihlaste se znovu.";
+                                                  break;
+                                              case 'calendar_fetch_failed':
+                                                  echo "Nepodařilo se načíst seznam kalendářů. Zkuste to prosím znovu.";
+                                                  break;
+                                              default:
+                                                  echo "Nastala neznámá chyba při přihlašování.";
+                                          }
+                                      ?>
+                                  </span>
+                              </div>
+                              <?php endif; ?>
+                              <a href="google/auth.php" class="inline-flex items-center justify-center gap-2 bg-white border border-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg hover:bg-gray-50 transition-all shadow-sm">
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 186.69 190.5">
+                                      <g transform="translate(1184.583 765.171)">
+                                          <path clip-path="none" mask="none" d="M-1089.333-687.239v36.888h51.262c-2.251 11.863-9.006 21.908-19.137 28.662l30.913 23.986c18.011-16.625 28.402-41.044 28.402-70.052 0-6.754-.606-13.249-1.732-19.483z" fill="#4285f4"/>
+                                          <path clip-path="none" mask="none" d="M-1142.714-651.791l-6.972 5.337-24.679 19.223h0c15.673 31.086 47.796 52.561 85.03 52.561 25.717 0 47.278-8.486 63.038-23.033l-30.913-23.986c-8.486 5.715-19.31 9.179-32.125 9.179-24.765 0-45.806-16.712-53.34-39.226z" fill="#34a853"/>
+                                          <path clip-path="none" mask="none" d="M-1174.365-712.61c-6.494 12.815-10.217 27.276-10.217 42.689s3.723 29.874 10.217 42.689c0 .086 31.693-24.592 31.693-24.592-1.905-5.715-3.031-11.776-3.031-18.098s1.126-12.383 3.031-18.098z" fill="#fbbc05"/>
+                                          <path clip-path="none" mask="none" d="M-1089.333-727.244c14.028 0 26.497 4.849 36.455 14.201l27.276-27.276c-16.539-15.413-38.013-24.852-63.731-24.852-37.234 0-69.359 21.388-85.032 52.561l31.692 24.592c7.533-22.514 28.575-39.226 53.34-39.226z" fill="#ea4335"/>
+                                      </g>
+                                  </svg>
+                                  Přihlásit se pomocí Google
+                              </a>
+                          </div>
+                       </div>
+                   </div>
             <?php endif; ?>
         </div>
     </div>

@@ -41,6 +41,7 @@ body {
     display: grid; 
     font-size: 0.9rem;
     grid-template-columns: 82% 18%;
+    page-break-inside: avoid;
 }
 .inner_box {
     display: flex;
@@ -48,6 +49,7 @@ body {
     gap: 0.5rem;
     align-items: start;
     justify-content: start;
+    page-break-inside: avoid;
 }
 .black_box {
     color: #ffffff; 
@@ -67,3 +69,13 @@ body {
     padding: 0 2px;
 }
 [x-cloak] { display: none !important; }
+
+.event-group {
+    page-break-inside: avoid;
+    display: grid;
+}
+
+.event-container {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+}

@@ -47,7 +47,7 @@
             if (count($events[$i]) > 1) {
                 /* number of events in one group */
                 /* two events at the same time */
-                echo '<div class="grid grid-cols-2 gap-1">';
+                echo '<div class="grid grid-cols-2 gap-1 event-group event-container">';
                     //check if any of the arrays in the $events[$i] array is an array of arrays
                     $isArrayOfArrays = false;
                     foreach ($events[$i] as $event) {
@@ -70,7 +70,9 @@
                 echo '</div>';
                 continue;
             }
+            echo '<div class="event-container">';
             printEvent($events[$i][0]['DTSTART'], $events[$i][0]['DTEND'], $events[$i][0]['SUMMARY'], $events[$i][0]['DESCRIPTION'] ?? null, '', ($events[$i][0]['ACTIVITY'] ?? false), ($events[$i][0]['TOPIC'] ?? false), ($events[$i][0]['ORGANIZATIONAL'] ?? false));
+            echo '</div>';
         }
         //if it's not last iteration, add page break
         if($day != array_key_last($days)) {
@@ -80,6 +82,21 @@
     ?>    
 </body>
 <script>
-    window.onload = function() { window.print(); }
+    window.onload = function() {
+        // Force page breaks before event containers that would otherwise be split
+        const eventContainers = document.querySelectorAll('.event-container');
+        
+        eventContainers.forEach(container => {
+            // Set a specific style to prevent page breaks inside
+            container.style.pageBreakInside = 'avoid';
+            container.style.breakInside = 'avoid';
+            
+            // For newer browsers
+            container.style.containIntrinsicSize = 'auto';
+        });
+        
+        // After applying styles, start printing
+        window.print();
+    }
 </script>
 </html>

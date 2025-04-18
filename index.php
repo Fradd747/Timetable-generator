@@ -339,6 +339,10 @@ if ($is_authenticated) {
                         </a>
                     </li>
                 </ul>
+                <div class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                    <a href="privacy-policy.php" class="text-blue-800 hover:underline dark:text-blue-500 mx-2">Zásady ochrany osobních údajů</a> | 
+                    <a href="terms-of-service.php" class="text-blue-800 hover:underline dark:text-blue-500 mx-2">Obchodní podmínky</a>
+                </div>
             </div>
         </div>
     </footer>

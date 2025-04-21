@@ -97,7 +97,7 @@ if ($is_authenticated) {
     gtag('config', 'G-E06PEENMY1');
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" href="images/logo_without_text.png">
+    <link rel="icon" href="images/logo.png">
     <title>Generátor harmonogramu</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="styles.css">
@@ -133,48 +133,58 @@ if ($is_authenticated) {
 <body x-data="{ event_popup: false }">
     <!-- calendar export tutorial -->
     <div x-cloak x-show="event_popup" x-transition class="w-full h-full fixed top-0 left-0 flex justify-center items-center py-5 z-10">
-        <div @click.outside="event_popup = false" class="w-full h-full pt-10 max-w-2xl mx-3 md:m-0 p-3 bg-white rounded-xl myshadow relative">
-            <img @click="event_popup = false" src="images/icons/cross.svg" class="w-6 absolute top-2 z-20 right-2 cursor-pointer transition hover:scale-110">
-            <ul aria-label="Activity feed" role="feed" class="h-full overflow-y-auto relative flex flex-col gap-6 py-6 pl-6 before:absolute before:top-0 before:left-6 before:h-full h-fit before:border before:-translate-x-1/2 before:border-slate-200 before:border-dashed after:absolute after:top-6 after:left-6 after:bottom-6 after:border after:-translate-x-1/2 after:border-slate-200 ">
-                <li class="relative pl-3">
-                    <h3 class="font-bold">Jak nastavit akce v kalendáři?</h3>
-                </li>
-                <li class="relative pl-6 flex items-start">
-                    <span class="absolute left-0 z-10 flex items-center justify-center w-8 h-8 -translate-x-1/2 rounded-full text-slate-700 ring-2 ring-white bg-slate-200 ">
-                        <img src="images/icons/calendar.svg">                        
-                    </span>
-                    <div class="flex flex-col flex-1 gap-0">
-                        <p class="text-xs text-slate-500">Vytvořte si jednotlivé bloky v kalendáři dle dnů.</p>
-                        <img src="images/events.jpg" class="w-56 rounded-md border border-gray-200 mt-1">
-                    </div>
-                </li>
-                <li class="relative pl-6 flex items-start">
-                    <span class="absolute left-0 z-10 flex items-center justify-center w-8 h-8 -translate-x-1/2 rounded-full text-slate-700 ring-2 ring-white bg-slate-200 ">
-                        <img src="images/icons/event.svg">
-                    </span>
-                    <div class="flex flex-col flex-1 gap-0">
-                        <p class="text-xs text-slate-500">
-                            Přidejte do popisu bloku příznaky, které chcete aby se zobrazily. <b>Příznaky vždy oddělujte na nové řádky.</b><br>
-                            <code><b>povinný</b></code> = zobrazí ikonu (povinný) v právé části bloku<br>
-                            <code><b>program</b></code> = pole bloku se zbarví šedě<br>
-                            <code><b>jakýkoliv další text</b></code> = zobrazí se jako popis bloku<br>
-                        </p>
-                        <img src="images/event_detail.jpg" class="w-96 rounded-md border border-gray-200 mt-1">
-                    </div>
-                </li>
-            </ul>
+        <div @click.outside="event_popup = false" class="w-full h-full pt-10 max-w-4xl mx-3 md:m-0 p-5 bg-white rounded-xl myshadow relative flex flex-col">
+            <img @click="event_popup = false" src="images/icons/cross.svg" class="w-8 absolute top-3 z-20 right-3 cursor-pointer transition hover:scale-110">
+            <h3 class="font-bold text-2xl pl-8 pb-4">Jak nastavit akce v kalendáři?</h3>
+            <div class="flex-1 overflow-y-auto pr-5">
+                <ul aria-label="Activity feed" role="feed" class="relative flex flex-col gap-8 py-8 pl-8 after:absolute after:top-8 after:left-8 after:bottom-8 after:border after:-translate-x-1/2 after:border-slate-200">
+                    <li class="relative pl-8 flex items-start">
+                        <span class="absolute left-0 z-10 flex items-center justify-center w-10 h-10 -translate-x-1/2 rounded-full text-slate-700 ring-2 ring-white bg-slate-200 ">
+                            <img src="images/icons/calendar.svg" class="size-6">
+                        </span>
+                        <div class="flex flex-col flex-1 gap-0">
+                            <p class="text-base text-slate-500">Vytvoř si jednotlivé bloky v kalendáři dle dnů.</p>
+                            <img src="images/events.jpg" class="w-96 rounded-md border border-gray-200 mt-3">
+                        </div>
+                    </li>
+                    <li class="relative pl-8 flex items-start">
+                        <span class="absolute left-0 z-10 flex items-center justify-center w-10 h-10 -translate-x-1/2 rounded-full text-slate-700 ring-2 ring-white bg-slate-200 ">
+                            <img src="images/icons/event.svg" class="size-6">
+                        </span>
+                        <div class="flex flex-col flex-1 gap-0">
+                            <p class="text-base text-slate-500">
+                                Přidej do popisu bloku příznaky, které chceš, aby se zobrazily v harmonogramu. <b>Příznaky vždy odděluj na nové řádky.</b><br>
+                                <code><b>povinný</b></code> = zobrazí ikonu (povinný) v právé části bloku<br>
+                                <code><b>program</b></code> = pole bloku se zbarví šedě<br>
+                                <code><b>jakýkoliv další text</b></code> = zobrazí se jako popis bloku pod jeho názvem<br>
+                            </p>
+                            <img src="images/event_detail.jpg" class="w-full max-w-2xl rounded-md border border-gray-200 mt-3">
+                        </div>
+                    </li>
+                    <li class="relative pl-8 flex items-start">
+                        <span class="absolute left-0 z-10 flex items-center justify-center w-10 h-10 -translate-x-1/2 rounded-full text-slate-700 ring-2 ring-white bg-slate-200 ">
+                            <img src="images/icons/template.svg" class="size-6 stroke-red-700">
+                        </span>
+                        <div class="flex flex-col flex-1 gap-0">
+                            <p class="text-base text-slate-500">
+                                Vyber si šablonu z dostupných možností, nebo mi napiš na <a href="mailto:jan.korbay@skaut.cz" class="text-blue-600 hover:text-blue-800">jan.korbay@skaut.cz</a> a mohu vytvořit šablonu přímo pro váš kurz/akci na míru.
+                            </p>
+                        </div>
+                    </li>
+                </ul>
+            </div>
         </div>
     </div>
     <div class="flex justify-center bg-gray-200 items-center w-full p-0 w-0 h-[90vh] z-0">
-        <div class="w-fit max-w-xl mx-3 bg-white rounded-xl shadow-lg p-3">
-            <!-- <h1 class="font-['skautbold'] text-lg mb-2">Generátor harmonogramu</h1> -->
-            <div class="flex justify-center w-full">
-                <img src="images/logo.svg" class="h-6 sm:h-9 m-5 mb-8" alt="Logo" />
+        <div class="w-full max-w-lg mx-3 bg-white rounded-xl shadow-lg p-3">
+            <div class="flex justify-center items-center w-full gap-3 m-5 mb-8">
+                <img src="images/logo.png" class="h-8 sm:h-9" alt="Logo" />
+                <h1 class="font-['funnel-sans'] text-xl whitespace-nowrap">Generátor <span class="text-[#2a93d6]">harmonogramu</span></h1>
             </div>
 
             <?php if ($is_authenticated && isset($_SESSION['google_user'])): ?>
                 <!-- Authenticated State: Calendar Selection Form -->
-                <div class="mb-4 flex items-center justify-between space-x-3 p-2 bg-gray-100 rounded-lg">
+                <div class="mb-4 flex items-center justify-between space-x-3 p-2 md:p-3 bg-gray-100 rounded-lg">
                     <div class="flex items-center gap-3">
                         <img src="<?php echo htmlspecialchars($_SESSION['google_user']['picture']); ?>" alt="Profile" class="w-10 h-10 rounded-full">
                         <div>
@@ -238,6 +248,12 @@ if ($is_authenticated) {
                     <div class="flex w-full mt-3">
                         <button type="submit" class="shadow-lg border rounded-lg p-2 hover:ring-2 hover:ring-blue-300 transition duration-150 ease-in-out bg-blue-500 text-white flex-grow">Vygenerovat</button>
                     </div>
+                    <?php if (isset($_SESSION['export_error']) && $_SESSION['export_error'] === 'no_events'): ?>
+                        <div class="text-red-600 text-sm w-full text-center bg-red-50 py-1 px-2 rounded-lg border border-red-200">
+                            V zadaném období nebyly nalezeny žádné události. Zkuste změnit období nebo vybrat jiný kalendář.
+                        </div>
+                        <?php unset($_SESSION['export_error']); // Clear the error message after displaying ?>
+                    <?php endif; ?>
                 </form>
 
             <?php else: ?>
@@ -252,7 +268,7 @@ if ($is_authenticated) {
                           x-transition:leave-end="opacity-0 transform scale-95"
                           class="flex flex-col bg-gray-50 p-4 rounded-lg border border-gray-200 text-center">
                           <h1 class="text-lg font-semibold mb-2">Jak to funguje?</h1>
-                          <p class="text-sm text-gray-600 mb-3">Do Google kalendáře si přidejte jednotlivé programové bloky dle dnů na vašem táboře, kurzu nebo jakékoliv jiné akci. Pak se stačí jen zde přihlásit skrze svůj Google účet a vygenerovat harmonogram, který si můžete stáhnout nebo vytisknout.</p>
+                          <p class="text-sm text-gray-600 mb-3">Do Google kalendáře si přidejte jednotlivé programové bloky dle dnů na vašem táboře, kurzu nebo jakékoliv jiné akci. Pak se stačí zde jen přihlásit skrze svůj Google účet a vygenerovat harmonogram, který si můžete stáhnout nebo vytisknout.</p>
                           <button @click="showIntro = false" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 font-medium self-center transition duration-150 ease-in-out">Chci to zkusit!</button>
                       </div>
   
@@ -315,7 +331,10 @@ if ($is_authenticated) {
         <div class="max-w-screen-xl p-4 py-6 mx-auto md:pb-8 md:p-8 md:pt-0">
             <hr class="my-6 border-gray-200 sm:mx-auto md:my-8">
             <div class="text-center flex flex-col gap-2">
-                <img src="images/logo.svg" class="h-6 sm:h-9" alt="Logo" />
+                <div class="flex justify-center items-center gap-3">
+                    <img src="images/logo.png" class="h-6 sm:h-9" alt="Logo" />
+                    <h1 class="font-['funnel-sans'] text-xl whitespace-nowrap">Generátor <span class="text-[#2a93d6]">harmonogramu</span></h1>
+                </div>
                 <span class="block text-sm text-center text-gray-500">
                     Jan Korbay - <a href="mailto:jan.korbay@skaut.cz" class="text-blue-800 hover:underline">jan.korbay@skaut.cz</a>
                 </span>

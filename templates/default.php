@@ -40,7 +40,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Generátor harmonogramu</title>
-    <link rel="icon" href="images/logo_without_text.png">
+    <link rel="icon" href="images/logo.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="styles.css">
 </head>
@@ -57,26 +57,30 @@
                     //check if any of the arrays in the $events[$i] array is an array of arrays
                     $isArrayOfArrays = false;
                     foreach ($events[$i] as $event) {
-                        if (array_filter($event, 'is_array') === $event) {
+                        // Check if $event is an array and all its elements are also arrays
+                        if (is_array($event) && count(array_filter($event, 'is_array')) === count($event) && count($event) > 0) {
                             $isArrayOfArrays = true;
                             break;
-                        }            
+                        }
                     }
                     foreach ($events[$i] as $event) {
-                        if (array_filter($event, 'is_array') === $event) {
+                         // Check if $event is an array and all its elements are also arrays
+                        if (is_array($event) && count(array_filter($event, 'is_array')) === count($event) && count($event) > 0) {
                             echo '<div class="flex flex-col gap-1">';
-                            foreach ($event as $event) {
-                                printEvent($event['DTSTART'], $event['DTEND'], $event['SUMMARY'], $event['DESCRIPTION'] ?? null, '', ($event['PROGRAM'] ?? false), ($event['REQUIRED'] ?? false));
+                            foreach ($event as $sub_event) { // Use a different variable name here
+                                printEvent($sub_event['DTSTART'], $sub_event['DTEND'], $sub_event['SUMMARY'], $sub_event['DESCRIPTION'] ?? null, '', ($sub_event['PROGRAM'] ?? false), ($sub_event['REQUIRED'] ?? false));
                             }
                             echo '</div>';
-                        } else {
+                        } else if (is_array($event)) { // Ensure $event is an array before accessing keys
                             printEvent($event['DTSTART'], $event['DTEND'], $event['SUMMARY'], $event['DESCRIPTION'] ?? null, !$isArrayOfArrays ? 'h-fit' : '', ($event['PROGRAM'] ?? false), ($event['REQUIRED'] ?? false));
                         }
                     }
                 echo '</div>';
                 continue;
             }
-            printEvent($events[$i][0]['DTSTART'], $events[$i][0]['DTEND'], $events[$i][0]['SUMMARY'], $events[$i][0]['DESCRIPTION'] ?? null, '', ($events[$i][0]['PROGRAM'] ?? false), ($events[$i][0]['REQUIRED'] ?? false));    
+             if (isset($events[$i][0]) && is_array($events[$i][0])) { // Check if the first element exists and is an array
+                printEvent($events[$i][0]['DTSTART'], $events[$i][0]['DTEND'], $events[$i][0]['SUMMARY'], $events[$i][0]['DESCRIPTION'] ?? null, '', ($events[$i][0]['PROGRAM'] ?? false), ($events[$i][0]['REQUIRED'] ?? false));
+             }
         }
         //if it's not last iteration, add page break
         if($day != array_key_last($days)) {
@@ -84,6 +88,9 @@
         }
     }
     ?>    
+    <div class="footer">
+        Vygenerováno na harmonogram.skauting.cz
+    </div>
 </body>
 <script>
     window.onload = function() { window.print(); }

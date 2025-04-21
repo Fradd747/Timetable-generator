@@ -43,6 +43,13 @@ $endDate->add(new DateInterval('P1D')); // Add one day to include end date
 // Get events from Google Calendar
 $events = getCalendarEvents($client, $_SESSION['selected_calendar'], $startDate, $endDate);
 
+// Add this check: If no events found, redirect back with an error message
+if (empty($events)) {
+    $_SESSION['export_error'] = 'no_events';
+    header('Location: index.php');
+    exit();
+}
+
 // Group events by single days
 $days = [];
 foreach($events as $event) {

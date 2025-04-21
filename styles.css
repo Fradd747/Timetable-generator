@@ -4,6 +4,22 @@ body {
 }
 @media print {
     .pagebreak { page-break-before: always; }
+    body {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+    .footer {
+        position: fixed;
+        bottom: 0px; /* Adjust as needed for positioning */
+        right: 10px; /* Adjust as needed for positioning */
+        font-size: 0.75rem; /* Small text */
+        color: gray;
+        text-align: right;
+    }
+    /* Ensure footer doesn't overlap content if content reaches bottom */
+    body {
+        padding-bottom: 10px; /* Adjust based on footer height */
+    }
 }
 @font-face {
     font-family: 'themix';
@@ -23,9 +39,17 @@ body {
     font-style: normal;
     font-weight: normal;
 }
+
+@font-face {
+    font-family: 'funnel-sans';
+    src: url('fonts/FunnelSans.ttf') format('truetype');
+    font-style: normal;
+    font-weight: normal;
+}
+
 @page {
     size: A4;
-    margin: 10mm;
+    margin: 8.5mm;
 }
 .box {
     padding-top: 0.25rem;

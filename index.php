@@ -130,7 +130,7 @@ if ($is_authenticated) {
         }
     </style>
 </head>
-<body x-data="{ event_popup: false }">
+<body x-data="{ event_popup: false, login_popup: false }">
     <!-- calendar export tutorial -->
     <div x-cloak x-show="event_popup" x-transition class="w-full h-full fixed top-0 left-0 flex justify-center items-center py-5 z-10">
         <div @click.outside="event_popup = false" class="w-full h-full pt-10 max-w-4xl mx-3 md:m-0 p-5 bg-white rounded-xl myshadow relative flex flex-col">
@@ -175,8 +175,26 @@ if ($is_authenticated) {
             </div>
         </div>
     </div>
+    
+    <!-- Google login warning popup -->
+    <div x-cloak x-show="login_popup" x-transition class="w-full h-full fixed top-0 left-0 flex justify-center items-center py-5 z-20">
+        <div @click.outside="login_popup = false" class="w-full max-w-md mx-3 md:m-0 p-5 bg-white rounded-xl shadow-lg relative">
+            <img @click="login_popup = false" src="images/icons/cross.svg" class="w-6 absolute top-3 right-3 cursor-pointer transition hover:scale-110">
+            <div class="mt-3 text-center">
+                <h2 class="text-xl font-bold text-gray-800 mb-3">Důležité upozornění</h2>
+                <p class="text-gray-600 mb-2">Pro správné fungování aplikace je nezbytné povolit <strong>všechna oprávnění</strong> na následujících obrazovkách.</p>
+                <p class="text-gray-600 mb-4">Prosím, zaškrtněte všechna políčka, když k tomu budete vyzváni.</p>
+                <div class="flex justify-center">
+                    <a href="google/auth.php" class="inline-flex items-center justify-center gap-2 bg-blue-500 text-white font-medium py-2 px-4 rounded-lg hover:bg-blue-600 transition-all">
+                        Pokračovat s přihlášením
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <div class="flex justify-center bg-gray-200 items-center w-full p-0 w-0 h-[90vh] z-0">
-        <div class="w-full max-w-lg mx-3 bg-white rounded-xl shadow-lg p-3">
+        <div x-cloak class="w-full max-w-lg mx-3 bg-white rounded-xl shadow-lg p-3">
             <div class="flex justify-center items-center w-full gap-3 m-5 mb-8">
                 <img src="images/logo.png" class="h-8 sm:h-9" alt="Logo" />
                 <h1 class="font-['funnel-sans'] text-xl whitespace-nowrap">Generátor <span class="text-[#2a93d6]">harmonogramu</span></h1>
@@ -310,7 +328,7 @@ if ($is_authenticated) {
                                   </span>
                               </div>
                               <?php endif; ?>
-                              <a href="google/auth.php" class="inline-flex items-center justify-center gap-2 bg-white border border-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg hover:bg-gray-50 transition-all shadow-sm">
+                              <button @click="login_popup = true" class="inline-flex items-center justify-center gap-2 bg-white border border-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg hover:bg-gray-50 transition-all shadow-sm">
                                   <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 186.69 190.5">
                                       <g transform="translate(1184.583 765.171)">
                                           <path clip-path="none" mask="none" d="M-1089.333-687.239v36.888h51.262c-2.251 11.863-9.006 21.908-19.137 28.662l30.913 23.986c18.011-16.625 28.402-41.044 28.402-70.052 0-6.754-.606-13.249-1.732-19.483z" fill="#4285f4"/>
@@ -320,7 +338,7 @@ if ($is_authenticated) {
                                       </g>
                                   </svg>
                                   Přihlásit se pomocí Google
-                              </a>
+                              </button>
                           </div>
                        </div>
                    </div>
